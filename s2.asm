@@ -87184,17 +87184,9 @@ Debug_Init:
 	; be assumed that having it cleared here was intended.
 	bclr	#status.player.in_air,(MainCharacter+status).w
     endif
-	; S1 leftover
-	cmpi.b	#GameModeID_SpecialStage,(Game_Mode).w ; special stage mode? (you can't enter debug mode in S2's special stage)
-	bne.s	.islevel	; if not, branch
-	moveq	#6,d0		; force zone 6's debug object list (was the ending in S1)
-	bra.s	.selectlist
-; ===========================================================================
-.islevel:
+
 	moveq	#0,d0
 	move.b	(Current_Zone).w,d0
-
-.selectlist:
 	lea	(DebugObjectLists).l,a2
 	add.w	d0,d0
 	adda.w	(a2,d0.w),a2
@@ -87208,15 +87200,8 @@ Debug_Init:
 	move.b	#1,(Debug_Speed).w
 ; loc_41B0C:
 Debug_Main:
-	; S1 leftover
-	moveq	#6,d0		; force zone 6's debug object list (was the ending in S1)
-	cmpi.b	#GameModeID_SpecialStage,(Game_Mode).w	; special stage mode? (you can't enter debug mode in S2's special stage)
-	beq.s	.isntlevel	; if yes, branch
-
 	moveq	#0,d0
 	move.b	(Current_Zone).w,d0
-
-.isntlevel:
 	lea	(DebugObjectLists).l,a2
 	add.w	d0,d0
 	adda.w	(a2,d0.w),a2
@@ -87315,9 +87300,9 @@ Debug_ControlObjects:
 	beq.s	Debug_CycleObjects
 	; Cycle backwards though object list
 	subq.b	#1,(Debug_object).w
-	bcc.s	BranchTo_LoadDebugObjectSprite
+	bcc.w	LoadDebugObjectSprite
 	add.b	d6,(Debug_object).w
-	bra.s	BranchTo_LoadDebugObjectSprite
+	bra.w	LoadDebugObjectSprite
 ; ===========================================================================
 ; loc_41BF6:
 Debug_CycleObjects:
@@ -87326,10 +87311,8 @@ Debug_CycleObjects:
 	; Cycle forwards though object list
 	addq.b	#1,(Debug_object).w
 	cmp.b	(Debug_object).w,d6
-	bhi.s	BranchTo_LoadDebugObjectSprite
+	bhi.w	LoadDebugObjectSprite
 	move.b	#0,(Debug_object).w
-
-BranchTo_LoadDebugObjectSprite ; BranchTo
 	bra.w	LoadDebugObjectSprite
 ; ===========================================================================
 ; loc_41C12:
@@ -87378,12 +87361,6 @@ Debug_ExitDebugMode:
 	move.b	#9,x_radius(a1)
 	move.w	(Camera_Min_Y_pos_Debug_Copy).w,(Camera_Min_Y_pos).w
 	move.w	(Camera_Max_Y_pos_Debug_Copy).w,(Camera_Max_Y_pos_target).w
-	; useless leftover; this is for S1's special stage
-	cmpi.b	#GameModeID_SpecialStage,(Game_Mode).w	; special stage mode?
-	bne.s	return_41CB6		; if not, branch
-	move.b	#AniIDSonAni_Roll,(MainCharacter+anim).w
-	bset	#status.player.rolling,(MainCharacter+status).w
-	bset	#status.player.in_air,(MainCharacter+status).w
 
 return_41CB6:
 	rts
@@ -87427,8 +87404,7 @@ LoadDebugObjectSprite:
 	move.l	(a2,d0.w),mappings(a0)
 	move.w	6(a2,d0.w),art_tile(a0)
 	move.b	5(a2,d0.w),mapping_frame(a0)
-	jsrto	JmpTo66_Adjust2PArtPointer
-	rts
+	jmp	(Adjust2PArtPointer).l
 ; End of function LoadDebugObjectSprite
 
 ; ===========================================================================
@@ -87775,11 +87751,6 @@ DbgObjList_SCZ: dbglistheader
 	dbglistobj ObjID_Nebula,	Obj99_Obj98_MapUnc_3789A, $12,   0, make_art_tile(ArtTile_ArtNem_Nebula,1,1)
 	dbglistobj ObjID_EggPrison,	Obj3E_MapUnc_3F436,   0,   0, make_art_tile(ArtTile_ArtNem_Capsule,1,0)
 DbgObjList_SCZ_End
-
-	jmpTos JmpTo66_Adjust2PArtPointer
-
-
-
 
 ; ---------------------------------------------------------------------------
 ; "MAIN LEVEL LOAD BLOCK" (after Nemesis)
