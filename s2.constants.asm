@@ -1398,7 +1398,7 @@ Demo_Time_left:			ds.w	1	; 2 bytes
 Vscroll_Factor:
 Vscroll_Factor_FG:		ds.w	1
 Vscroll_Factor_BG:		ds.w	1
-unk_F61A:			ds.l	1	; Only ever cleared, never used
+				ds.b	4	; $FFFFF61A-$FFFFF61D
 Vscroll_Factor_P2:
 Vscroll_Factor_P2_FG:		ds.w	1
 Vscroll_Factor_P2_BG:		ds.w	1
@@ -1410,8 +1410,7 @@ Palette_fade_start:		ds.b	1	; Offset from the start of the palette to tell what 
 Palette_fade_length:		ds.b	1	; Number of entries to change in the palette fading routines
 
 MiscLevelVariables:
-VIntSubE_RunCount:		ds.b	1
-				ds.b	1	; $FFFFF629 ; seems unused
+				ds.b	2	; $FFFFF628-$FFFFF629 ; seems unused
 Vint_routine:			ds.b	1	; was "Delay_Time" ; routine counter for V-int
 				ds.b	1	; $FFFFF62B ; seems unused
 Sprite_count:			ds.b	1	; the number of sprites drawn in the current frame
@@ -1869,11 +1868,7 @@ Correct_cheat_entries_2:	ds.w	1	; for 14 continues or 7 emeralds codes
 
 Two_player_mode:		ds.b	1	; flag (0 for main game)
 Two_player_mode_copy:		ds.b	1	; used for Special Stages to determine where to return the player to
-unk_FFDA:			ds.w	1	; Written to once at title screen, never read from
-unk_FFDC:			ds.b	1	; Written to near loc_175EA, never read from
-unk_FFDD:			ds.b	1	; Written to near loc_175EA, never read from
-unk_FFDE:			ds.b	1	; Written to near loc_175EA, never read from
-unk_FFDF:			ds.b	1	; Written to near loc_175EA, never read from
+				ds.b	6	; $FFFFFFDA-$FFFFFFDF ; unused
 
 ; Values in these variables are passed to the sound driver during V-INT.
 ; They use a playlist index, not a sound test index.
