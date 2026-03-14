@@ -5528,7 +5528,7 @@ OilSlides:
 +
 	_btst	#status_secondary.sliding,status_secondary(a1)
 	_beq.s	+	; rts
-	move.w	#5,move_lock(a1)
+	move.b	#5,move_lock(a1)
 	andi.b	#~(1<<status_secondary.sliding)&$FF,status_secondary(a1)
 +	rts
 ; ===========================================================================
@@ -33205,7 +33205,7 @@ loc_18AEE:
 	neg.w	x_vel(a1)
 
 loc_18B1C:
-	move.w	#$F,move_lock(a1)
+	move.b	#$F,move_lock(a1)
 	move.w	x_vel(a1),inertia(a1)
 	btst	#status.player.rolling,status(a1)
 	bne.s	loc_18B36
@@ -35622,7 +35622,7 @@ Sonic_Move:
 	move.w	(Sonic_deceleration).w,d4
 	_btst	#status_secondary.sliding,status_secondary(a0)
 	_bne.w	Obj01_Traction
-	tst.w	move_lock(a0)
+	tst.b	move_lock(a0)
 	bne.w	Obj01_ResetScr
 	btst	#button_left,(Ctrl_1_Held_Logical).w	; is left being pressed?
 	beq.s	Obj01_NotLeft			; if not, branch
@@ -36072,7 +36072,7 @@ Sonic_RollSpeed:
 			; which means Sonic is much better than Tails at slowing down his rolling when he's underwater
 	_btst	#status_secondary.sliding,status_secondary(a0)
 	_bne.w	Obj01_Roll_ResetScr
-	tst.w	move_lock(a0)
+	tst.b	move_lock(a0)
 	bne.s	Sonic_ApplyRollSpeed
 	btst	#button_left,(Ctrl_1_Held_Logical).w	; is left being pressed?
 	beq.s	+				; if not, branch
@@ -36832,7 +36832,7 @@ Sonic_SlopeRepel:
 	nop
 	tst.b	stick_to_convex(a0)
 	bne.s	return_1AE42
-	tst.w	move_lock(a0)
+	tst.b	move_lock(a0)
 	bne.s	loc_1AE44
 	move.b	angle(a0),d0
 	addi.b	#$20,d0
@@ -36843,14 +36843,14 @@ Sonic_SlopeRepel:
 	bhs.s	return_1AE42
 	clr.w	inertia(a0)
 	bset	#status.player.in_air,status(a0)
-	move.w	#$1E,move_lock(a0)
+	move.b	#$1E,move_lock(a0)
 
 return_1AE42:
 	rts
 ; ===========================================================================
 
 loc_1AE44:
-	subq.w	#1,move_lock(a0)
+	subq.b	#1,move_lock(a0)
 	rts
 ; End of function Sonic_SlopeRepel
 
@@ -37353,7 +37353,7 @@ Obj01_ResetLevel_Part2:
 	move.w	#0,y_vel(a0)
 	move.w	#0,inertia(a0)
 	move.b	#1<<status.player.in_air,status(a0)
-	move.w	#0,move_lock(a0)
+	move.b	#0,move_lock(a0)
 	move.w	#0,restart_countdown(a0)
 
 return_1B31A:
@@ -38255,7 +38255,7 @@ loc_1BC68:
 	move.w	#0,y_vel(a0)
 	move.w	#0,inertia(a0)
 	move.b	#1<<status.player.in_air,status(a0)
-	move.w	#0,move_lock(a0)
+	move.b	#0,move_lock(a0)
 	andi.w	#drawing_mask,art_tile(a0)
 	tst.b	art_tile(a1)
 	bpl.s	+
@@ -38296,7 +38296,7 @@ TailsCPU_Normal_SonicOK:
 	bne.w	TailsCPU_Normal_HumanControl		; (if not, branch)
 	tst.b	obj_control(a0)			; and Tails isn't fully object controlled (&$80)
 	bmi.w	TailsCPU_Normal_HumanControl		; (if not, branch)
-	tst.w	move_lock(a0)			; and Tails' movement is locked (usually because he just fell down a slope)
+	tst.b	move_lock(a0)			; and Tails' movement is locked (usually because he just fell down a slope)
 	beq.s	+					; (if not, branch)
 	tst.w	inertia(a0)			; and Tails is stopped, then...
 	bne.s	+					; (if not, branch)
@@ -38479,7 +38479,7 @@ TailsCPU_Panic:
 	bsr.w	TailsCPU_CheckDespawn
 	tst.w	(Tails_control_counter).w
 	bne.w	return_1BF36
-	tst.w	move_lock(a0)
+	tst.b	move_lock(a0)
 	bne.s	return_1BF36
 	tst.b	spindash_flag(a0)
 	bne.s	TailsCPU_Panic_ChargingDash
@@ -38696,7 +38696,7 @@ Tails_Move:
 	move.w	(Tails_deceleration).w,d4
 	_btst	#status_secondary.sliding,status_secondary(a0)
 	_bne.w	Obj02_Traction
-	tst.w	move_lock(a0)
+	tst.b	move_lock(a0)
 	bne.w	Obj02_ResetScr
 	btst	#button_left,(Ctrl_2_Held_Logical).w	; is left being pressed?
 	beq.s	Obj02_NotLeft			; if not, branch
@@ -39051,7 +39051,7 @@ Tails_RollSpeed:
     endif
 	_btst	#status_secondary.sliding,status_secondary(a0)
 	_bne.w	Obj02_Roll_ResetScr
-	tst.w	move_lock(a0)
+	tst.b	move_lock(a0)
 	bne.s	Tails_ApplyRollSpeed
 	btst	#button_left,(Ctrl_2_Held_Logical).w	; is left being pressed?
 	beq.s	+				; if not, branch
@@ -39687,7 +39687,7 @@ Tails_SlopeRepel:
 	nop
 	tst.b	stick_to_convex(a0)
 	bne.s	return_1C8F2
-	tst.w	move_lock(a0)
+	tst.b	move_lock(a0)
 	bne.s	loc_1C8F4
 	move.b	angle(a0),d0
 	addi.b	#$20,d0
@@ -39698,14 +39698,14 @@ Tails_SlopeRepel:
 	bhs.s	return_1C8F2
 	clr.w	inertia(a0)
 	bset	#status.player.in_air,status(a0)
-	move.w	#$1E,move_lock(a0)
+	move.b	#$1E,move_lock(a0)
 
 return_1C8F2:
 	rts
 ; ===========================================================================
 
 loc_1C8F4:
-	subq.w	#1,move_lock(a0)
+	subq.b	#1,move_lock(a0)
 	rts
 ; End of function Tails_SlopeRepel
 
@@ -40202,7 +40202,7 @@ Obj02_ResetLevel_Part3:
 	move.w	#0,y_vel(a0)
 	move.w	#0,inertia(a0)
 	move.b	#1<<status.player.in_air,status(a0)
-	move.w	#0,move_lock(a0)
+	move.b	#0,move_lock(a0)
 
 return_1CD8E:
 	rts
@@ -44254,7 +44254,7 @@ loc_1FB0C:
 	clr.w	y_vel(a1)
 	clr.w	inertia(a1)
 	move.b	#AniIDSonAni_Bubble,anim(a1)
-	move.w	#$23,move_lock(a1)
+	move.b	#$23,move_lock(a1)
 	move.b	#0,jumping(a1)
 	bclr	#status.player.pushing,status(a1)
 	bclr	#status.player.rolljumping,status(a1)
@@ -47029,7 +47029,7 @@ Obj1B_GiveBoost:
 	bset	#status.player.x_flip,status(a1)	; turn him left
 	neg.w	x_vel(a1)	; make the boosting direction left
 +
-	move.w	#$F,move_lock(a1)	; don't let him turn around for a few frames
+	move.b	#$F,move_lock(a1)	; don't let him turn around for a few frames
 	move.w	x_vel(a1),inertia(a1)	; update his inertia value
 	bclr	#status.npc.p1_pushing,status(a0)
 	bclr	#status.npc.p2_pushing,status(a0)
@@ -49288,7 +49288,7 @@ loc_243FE:
 	neg.w	x_vel(a1)
 
 loc_2442C:
-	move.w	#$F,move_lock(a1)
+	move.b	#$F,move_lock(a1)
 	move.w	x_vel(a1),inertia(a1)
 	btst	#status.player.rolling,status(a1)
 	bne.s	loc_24446
@@ -52070,7 +52070,7 @@ loc_2704C:
 	bclr	#status.player.x_flip,status(a1)
 	neg.w	x_vel(a1)
 +
-	move.w	#$F,move_lock(a1)
+	move.b	#$F,move_lock(a1)
 	move.w	x_vel(a1),inertia(a1)
 	btst	#status.player.rolling,status(a1)
 	bne.s	+
@@ -57227,7 +57227,7 @@ loc_2B35C:
 	move.w	#(4<<8)|(0<<0),anim(a0)
 
 loc_2B392:
-	move.w	#$F,move_lock(a1)
+	move.b	#$F,move_lock(a1)
 	move.w	x_vel(a1),inertia(a1)
 	move.b	#$E,y_radius(a1)
 	move.b	#7,x_radius(a1)
