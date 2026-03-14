@@ -613,7 +613,7 @@ Vint0_noWater:
 	; In two-player mode, we have to update the sprite table
 	; even during a lag frame so that the top half of the screen
 	; shows the correct sprites.
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	++
 
 	; Update V-Scroll.
@@ -756,7 +756,7 @@ Vint_Level:
 	dma68kToVDP Horiz_Scroll_Buf,VRAM_Horiz_Scroll_Table,VRAM_Horiz_Scroll_Table_Size,VRAM
 
     if fixBugs
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	++
 	; Like in Sonic 3, the sprite tables are page-flipped in two-player mode.
 	; This fixes a race-condition where incomplete sprite tables can be uploaded
@@ -1022,7 +1022,7 @@ loc_BD6:
 	dma68kToVDP Horiz_Scroll_Buf,VRAM_Horiz_Scroll_Table,VRAM_Horiz_Scroll_Table_Size,VRAM
 
     if fixBugs
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	++
 	; Like in Sonic 3, the sprite tables are page-flipped in two-player mode.
 	; This fixes a race-condition where incomplete sprite tables can be uploaded
@@ -1181,7 +1181,7 @@ loc_EFE:
 H_Int:
 	tst.w	(Hint_flag).w
 	beq.w	H_Int_Done
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.w	PalToCRAM
 	move.w	#0,(Hint_flag).w
 	move.l	a5,-(sp)
@@ -1462,7 +1462,7 @@ ClearScreen:
 	dmaFillVRAM 0,VRAM_Plane_A_Name_Table,VRAM_Plane_Table_Size	; Clear Plane A pattern name table
 	dmaFillVRAM 0,VRAM_Plane_B_Name_Table,VRAM_Plane_Table_Size	; Clear Plane B pattern name table
 
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 
 	dmaFillVRAM 0,VRAM_Plane_A_Name_Table_2P,VRAM_Plane_Table_Size
@@ -4107,7 +4107,7 @@ SegaScreen:
 	move.w	#$8C81,(a6)		; H res 40 cells, no interlace, S/H disabled
 	move.w	#$9003,(a6)		; Scroll table size: 128x32 ($2000 bytes)
 	clr.b	(Water_fullscreen_flag).w
-	clr.w	(Two_player_mode).w
+	clr.b	(Two_player_mode).w
 	move	#$2700,sr
 	move.w	(VDP_Reg1_val).w,d0
 	andi.b	#$BF,d0
@@ -4316,7 +4316,7 @@ TitleScreen:
 	move.w	#0,(Demo_mode_flag).w
 	move.w	#0,(unk_FFDA).w
 	move.w	#0,(PalCycle_Timer).w
-	move.w	#0,(Two_player_mode).w
+	move.b	#0,(Two_player_mode).w
 	move.b	#0,(Level_started_flag).w
 
 	; And finally fade out.
@@ -4394,7 +4394,7 @@ TitleScreen:
 
 	; Reset some variables.
 	move.b	#0,(Debug_mode_flag).w
-	move.w	#0,(Two_player_mode).w
+	move.b	#0,(Two_player_mode).w
 
 	; Set the time that the title screen lasts (little over ten seconds).
 	move.w	#60*10+40,(Demo_Time_left).w
@@ -4531,7 +4531,6 @@ TitleScreen_Loop:
 	bne.s	TitleScreen_CheckIfChose2P	; branch if not a 1-player game
 
 	moveq	#0,d0
-	move.w	d0,(Two_player_mode_copy).w
 	move.w	d0,(Two_player_mode).w
     if emerald_hill_zone_act_1=0
 	move.w	d0,(Current_ZoneAndAct).w ; emerald_hill_zone_act_1
@@ -4557,9 +4556,7 @@ TitleScreen_CheckIfChose2P:
 	subq.b	#1,d0
 	bne.s	TitleScreen_ChoseOptions
 
-	moveq	#1,d1
-	move.w	d1,(Two_player_mode_copy).w
-	move.w	d1,(Two_player_mode).w
+	move.w	#$101,(Two_player_mode).w
 
 	moveq	#0,d0
 	move.w	d0,(Got_Emerald).w
@@ -4596,7 +4593,7 @@ TitleScreen_Demo:
 	move.b	#GameModeID_Demo,(Game_Mode).w ; => Level (Demo mode)
 	cmpi.w	#emerald_hill_zone_act_1,(Current_ZoneAndAct).w
 	bne.s	+
-	move.w	#1,(Two_player_mode).w
+	move.b	#1,(Two_player_mode).w
 +
 	move.b	#3,(Life_count).w
 	move.b	#3,(Life_count_2P).w
@@ -4787,7 +4784,7 @@ Level:
 	bsr.w	LoadPLC
 	bsr.w	Level_SetPlayerMode
 	moveq	#PLCID_MilesLife2P,d0
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	+
 	cmpi.w	#2,(Player_mode).w
 	bne.s	Level_ClrRam
@@ -4821,7 +4818,7 @@ Level_ClrRam:
 
 Level_InitWater:
 	move.b	#1,(Water_flag).w
-	move.w	#0,(Two_player_mode).w
+	move.b	#0,(Two_player_mode).w
 +
 	lea	(VDP_control_port).l,a6
 	move.w	#$8B03,(a6)		; EXT-INT disabled, V scroll by screen, H scroll by line
@@ -4843,7 +4840,7 @@ Level_InitWater:
 	move.b	#1,(Debug_mode_flag).w
 +
 	move.w	#$8ADF,(Hint_counter_reserve).w	; H-INT every 223rd scanline
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	move.w	#$8A6B,(Hint_counter_reserve).w	; H-INT every 108th scanline
 	move.w	#$8014,(a6)			; H-INT enabled
@@ -4897,7 +4894,7 @@ Level_GetBgm:
 	moveq	#0,d0
 	move.b	(Current_Zone).w,d0
 	lea_	MusicList,a1
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	Level_PlayBgm
 	lea_	MusicList2,a1
 ; loc_40C8:
@@ -5157,7 +5154,7 @@ Level_MainLoop:
 Level_SetPlayerMode:
 	cmpi.b	#GameModeID_TitleCard|GameModeID_Demo,(Game_Mode).w ; pre-level demo mode?
 	beq.s	+			; if yes, branch
-	tst.w	(Two_player_mode).w	; 2P mode?
+	tst.b	(Two_player_mode).w	; 2P mode?
 	bne.s	+			; if yes, branch
 	move.w	(Player_option).w,(Player_mode).w ; use the option chosen in the Options screen
 	rts
@@ -6004,7 +6001,7 @@ Osc_Data_End:
 
 ; sub_4AC6:
 OscillateNumDo:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	+
 	cmpi.b	#6,(MainCharacter+routine).w
 	bhs.s	OscillateNumDo_Return
@@ -6123,7 +6120,7 @@ nosignpost macro actid
 ; sub_4BD2:
 SetLevelEndType:
 	move.w	#0,(Level_Has_Signpost).w	; set level type to non-signpost
-	tst.w	(Two_player_mode).w	; is it two-player competitive mode?
+	tst.b	(Two_player_mode).w	; is it two-player competitive mode?
 	bne.s	LevelEnd_SetSignpost	; if yes, branch
 	nosignpost.w emerald_hill_zone_act_2
 	nosignpost.w metropolis_zone_act_3
@@ -6162,14 +6159,14 @@ CheckLoadSignpostArt:
 	cmp.w	(Camera_Min_X_pos).w,d1
 	beq.s	SignpostUpdateTailsBounds
 	move.w	d1,(Camera_Min_X_pos).w ; prevent camera from scrolling back to the left
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	+	; rts
 	moveq	#PLCID_Signpost,d0 ; <== PLC_1F
 	bra.w	LoadPLC2		; load signpost art
 ; ---------------------------------------------------------------------------
 ; loc_4C80:
 SignpostUpdateTailsBounds:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+	; rts
 	move.w	(Camera_X_pos_P2).w,d0
 	move.w	(Tails_Max_X_pos).w,d1
@@ -6540,9 +6537,9 @@ SpecialStage:
 	move.b	#MusID_FadeOut,d0 ; fade out the music
 	bsr.w	PlayMusic
 	bsr.w	Pal_FadeToWhite
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
-	move.w	#0,(Two_player_mode).w
+	move.b	#0,(Two_player_mode).w
 	st.b	(SS_2p_Flag).w ; set to -1
 	bra.s	++
 ; ===========================================================================
@@ -6742,7 +6739,7 @@ SpecialStage:
 	st.b	(Perfect_rings_flag).w
 +
 	bsr.w	Pal_FadeToWhite
-	tst.w	(Two_player_mode_copy).w
+	tst.b	(Two_player_mode_copy).w
 	bne.w	loc_540C
 	move	#$2700,sr
 	lea	(VDP_control_port).l,a6
@@ -6804,7 +6801,7 @@ SpecialStage:
 	move.w	#SndID_SpecStageEntry,d0
 	bsr.w	PlaySound
 	bsr.w	Pal_FadeToWhite
-	tst.w	(Two_player_mode_copy).w
+	tst.b	(Two_player_mode_copy).w
 	bne.s	loc_540C
 	move.b	#GameModeID_Level,(Game_Mode).w ; => Level (Zone play mode)
 	rts
@@ -10777,7 +10774,7 @@ TwoPlayerResults:
 	bsr.w	PlayMusic
 +
 	move.w	#(30*60)-1,(Demo_Time_left).w	; 30 seconds
-	clr.w	(Two_player_mode).w
+	clr.b	(Two_player_mode).w
 	clr.l	(Camera_X_pos).w
 	clr.l	(Camera_Y_pos).w
 	clr.l	(Vscroll_Factor).w
@@ -10814,9 +10811,7 @@ TwoPlayerResults:
 	move.b	#GameModeID_Level,(Game_Mode).w ; => Level (Zone play mode)
 	move.b	#0,(Last_star_pole_hit).w
 	move.b	#0,(Last_star_pole_hit_2P).w
-	moveq	#1,d0
-	move.w	d0,(Two_player_mode).w
-	move.w	d0,(Two_player_mode_copy).w
+	move.w	#$101,(Two_player_mode).w
 	moveq	#0,d0
 	move.l	d0,(Score).w
 	move.l	d0,(Score_2P).w
@@ -10845,9 +10840,7 @@ TwoPlayerResults:
 	move.w	#VsRSID_SS,(Results_Screen_2P).w
 	move.b	#1,(f_bigring).w
 	move.b	#GameModeID_SpecialStage,(Game_Mode).w ; => SpecialStage
-	moveq	#1,d0
-	move.w	d0,(Two_player_mode).w
-	move.w	d0,(Two_player_mode_copy).w
+	move.w	#$101,(Two_player_mode).w
 	move.b	#0,(Last_star_pole_hit).w
 	move.b	#0,(Last_star_pole_hit_2P).w
 	rts
@@ -10952,7 +10945,7 @@ TwoPlayerResultsDone_SpecialStage:
 	move.w	#VsRSID_SS,(Results_Screen_2P).w
 	move.b	#1,(f_bigring).w
 	move.b	#GameModeID_SpecialStage,(Game_Mode).w ; => SpecialStage
-	move.w	#1,(Two_player_mode).w
+	move.b	#1,(Two_player_mode).w
 	move.w	#0,(Level_Music).w
 	rts
 
@@ -11809,7 +11802,7 @@ MenuScreen:
 	move.b	#MusID_Options,d0
 	jsrto	JmpTo_PlayMusic
 	move.w	#(30*60)-1,(Demo_Time_left).w	; 30 seconds
-	clr.w	(Two_player_mode).w
+	clr.b	(Two_player_mode).w
 	clr.l	(Camera_X_pos).w
 	clr.l	(Camera_Y_pos).w
 	move.b	#VintID_Menu,(Vint_routine).w
@@ -11852,7 +11845,7 @@ loc_8DF4:
 	move.w	LevelSelect2P_LevelOrder(pc,d0.w),d0
 	bmi.s	loc_8E3A
 	move.w	d0,(Current_ZoneAndAct).w
-	move.w	#1,(Two_player_mode).w
+	move.b	#1,(Two_player_mode).w
 	move.b	#GameModeID_Level,(Game_Mode).w ; => Level (Zone play mode)
 	move.b	#0,(Last_star_pole_hit).w
 	move.b	#0,(Last_star_pole_hit_2P).w
@@ -11867,9 +11860,7 @@ loc_8DF4:
 loc_8E3A:
 	move.b	#4,(Current_Special_Stage).w
 	move.b	#GameModeID_SpecialStage,(Game_Mode).w ; => SpecialStage
-	moveq	#1,d0
-	move.w	d0,(Two_player_mode).w
-	move.w	d0,(Two_player_mode_copy).w
+	move.w	#$101,(Two_player_mode).w
 	rts
 ; ===========================================================================
 ; word_8E52:
@@ -12073,7 +12064,7 @@ MenuScreen_Options:
 	bsr.w	PalLoad_ForFade
 	move.b	#MusID_Options,d0
 	jsrto	JmpTo_PlayMusic
-	clr.w	(Two_player_mode).w
+	clr.b	(Two_player_mode).w
 	clr.l	(Camera_X_pos).w
 	clr.l	(Camera_Y_pos).w
 	clr.w	(Correct_cheat_entries).w
@@ -12108,7 +12099,6 @@ OptionScreen_Select:
 	; Start a single player game
 	moveq	#0,d0
 	move.w	d0,(Two_player_mode).w
-	move.w	d0,(Two_player_mode_copy).w
     if emerald_hill_zone_act_1=0
 	move.w	d0,(Current_ZoneAndAct).w ; emerald_hill_zone_act_1
     else
@@ -12133,9 +12123,7 @@ OptionScreen_Select_Not1P:
 	subq.b	#1,d0
 	bne.s	OptionScreen_Select_Other
 	; Start a 2P VS game
-	moveq	#1,d0
-	move.w	d0,(Two_player_mode).w
-	move.w	d0,(Two_player_mode_copy).w
+	move.w	#$101,(Two_player_mode).w
     if fixBugs
 	; The game forgets to reset these variables here, making it possible
 	; for the player to play two player mode with all emeralds collected,
@@ -12444,7 +12432,7 @@ MenuScreen_LevelSelect:
 	jsrto	JmpTo_PlayMusic
 
 	move.w	#(30*60)-1,(Demo_Time_left).w	; 30 seconds
-	clr.w	(Two_player_mode).w
+	clr.b	(Two_player_mode).w
 	clr.l	(Camera_X_pos).w
 	clr.l	(Camera_Y_pos).w
 	clr.w	(Correct_cheat_entries).w
@@ -12570,14 +12558,11 @@ LevelSelect_StartZone:
 	move.l	d0,(Timer_2P).w
 	move.l	d0,(Score_2P).w
 	move.b	d0,(Continue_count).w
+	move.w	d0,(Two_player_mode).w
 	move.l	#5000,(Next_Extra_life_score).w
 	move.l	#5000,(Next_Extra_life_score_2P).w
 	move.b	#MusID_FadeOut,d0
-	jsrto	JmpTo_PlaySound
-	moveq	#0,d0
-	move.w	d0,(Two_player_mode_copy).w
-	move.w	d0,(Two_player_mode).w
-	rts
+	jmpto	JmpTo_PlaySound
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -15139,7 +15124,7 @@ DeformBgLayer:
 	bsr.w	SetVertiScrollFlags
 
 DeformBgLayerAfterScrollVert:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	loc_C4D0
 	tst.b	(Scroll_lock_P2).w
 	bne.s	loc_C4D0
@@ -15262,7 +15247,7 @@ SwScrl_Title:
 ; loc_C57E:
 SwScrl_EHZ:
 	; Use different background scrolling code for two player mode.
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.w	SwScrl_EHZ_2P
 
 	; Update the background's vertical scrolling.
@@ -15790,7 +15775,7 @@ SwScrl_HTZ:
 	; Use different background scrolling code for two player mode...
 	; despite the fact that Hill Top Zone is not normally playable in
 	; two-player mode.
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.w	SwScrl_HTZ_2P
 
 	tst.b	(Screen_Shaking_Flag_HTZ).w
@@ -16420,7 +16405,7 @@ SwScrl_OOZ:
 ; loc_CD2C:
 SwScrl_MCZ:
 	; Use different background scrolling code for two player mode.
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.w	SwScrl_MCZ_2P
 
 	; Set the flags to dynamically load the background as it moves.
@@ -16948,7 +16933,7 @@ SwScrl_MCZ2P_RowHeights:
 ; loc_D0C6:
 SwScrl_CNZ:
 	; Use different background scrolling code for two player mode.
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.w	SwScrl_CNZ_2P
 
 	; Update 'Camera_BG_Y_pos'.
@@ -18549,7 +18534,7 @@ LoadTilesAsYouMove:
 	lea	(Camera_BG3_copy).w,a3
 	bsr.w	Draw_BG3	; used in CPZ deformation routine
 
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	lea	(Scroll_flags_copy_P2).w,a2
 	lea	(Camera_P2_copy).w,a3	; second player camera
@@ -19144,7 +19129,7 @@ BGCameraLookup:
 ; ===========================================================================
 ; loc_DE86:
 DrawBlockColumn_Advanced:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	.doubleResolution
 
 	moveq	#(1+screen_height/block_height+1)-1,d6	; Enough blocks to cover the screen, plus one more on the top and bottom.
@@ -19355,7 +19340,7 @@ DrawBlockColumn:
 	move.l	d0,d1		; copy byte-swapped VDP command for later access
 	bsr.w	GetAddressOfBlockInChunk
 
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	.doubleResolution
 
 -	move.w	(a0),d3		; get ID of the 16x16 block
@@ -19421,7 +19406,7 @@ DrawBlockRow:
 	add.w	4(a3),d4	; add Y pos
 ; loc_DF9A: DrawTiles_Vertical3: DrawBlockRow3:
 .AbsoluteXAbsoluteYCustomWidth:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	.doubleResolution
 
 	move.l	a2,-(sp)
@@ -19813,7 +19798,7 @@ CalculateVRAMAddressOfBlockForPlayer1:
 	add.w	(a3),d5		; add X pos
 ; CalcBlockVRAMPos2:
 .AbsoluteX:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	.AbsoluteX_DoubleResolution
 	add.w	4(a3),d4	; add Y pos
 ; CalcBlockVRAMPos_NoCamera:
@@ -19852,7 +19837,7 @@ CalculateVRAMAddressOfBlockForPlayer1:
 
 ;loc_E2C2: CalcBlockVRAMPosB:
 CalculateVRAMAddressOfBlockForPlayer2:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	.doubleResolution
 
 ;.regularResolution:
@@ -19934,7 +19919,7 @@ DrawInitialBG:
 	cmpi.b	#casino_night_zone,(Current_Zone).w
 	beq.w	++
     endif
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.w	+
 	cmpi.b	#mystic_cave_zone,(Current_Zone).w
 	beq.w	DrawInitialBG_LoadWholeBackground_512x512
@@ -20013,7 +19998,7 @@ DrawInitialBG_LoadWholeBackground_512x256:
 	move.w	d4,d1
 	; This is just a fancy efficient way of doing 'if true then call this, else call that'.
 	pea	+(pc)
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.w	CalculateVRAMAddressOfBlockForPlayer1.AbsoluteXAbsoluteY
 	bra.w	CalculateVRAMAddressOfBlockForPlayer1.AbsoluteXAbsoluteY_DoubleResolution
 +
@@ -20059,7 +20044,7 @@ loadZoneBlockMaps:
 	lea	(BM16_HTZ).l,a0
 	jsrto	JmpTo_KosDec	; patch for Hill Top Zone block map
 +
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	; In 2P mode, adjust the block table to halve the pattern index on each block
 	lea	(Block_Table).w,a1
@@ -20385,7 +20370,7 @@ LevEvents_EHZ2_Index:	offsetTable
 ; ===========================================================================
 ; loc_E676:
 LevEvents_EHZ2_Routine1:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	++
 	cmpi.w	#$2780,(Camera_X_pos).w
 	blo.s	+	; rts
@@ -21402,7 +21387,7 @@ LevEvents_MCZ2_Index: offsetTable
 ; ===========================================================================
 ; loc_F15C:
 LevEvents_MCZ2_Routine1:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	++
 	cmpi.w	#$2080,(Camera_X_pos).w
 	blo.s	+	; rts
@@ -21508,7 +21493,7 @@ LevEvents_CNZ2_Index: offsetTable
 ; ===========================================================================
 ; loc_F28E:
 LevEvents_CNZ2_Routine1:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	++
 	cmpi.w	#$27C0,(Camera_X_pos).w
 	blo.s	+	; rts
@@ -22030,7 +22015,7 @@ loc_F7BC:
 ; loc_F7D4:
 Obj11_Unload:
 	; this is essentially MarkObjGone, except we need to delete our subsprite objects as well
-	tst.w	(Two_player_mode).w	; is it two player mode?
+	tst.b	(Two_player_mode).w	; is it two player mode?
 	beq.s	+			; if not, branch
 	rts
 ; ---------------------------------------------------------------------------
@@ -22705,7 +22690,7 @@ loc_10006:
 ; ===========================================================================
 
 loc_1000C:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	bra.w	DisplaySprite
 ; ===========================================================================
@@ -23205,7 +23190,7 @@ loc_105A8:
 	bsr.w	sub_1061E
 
 loc_105B0:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	bra.w	DisplaySprite
 ; ===========================================================================
@@ -24943,7 +24928,7 @@ CollectRing_Tails:
 	bhs.s	+				; if yes, branch
 	addq.w	#1,(Ring_count_2P).w		; add 1 to the ring count
 +
-	tst.w	(Two_player_mode).w		; are we in a 2P game?
+	tst.b	(Two_player_mode).w		; are we in a 2P game?
 	beq.s	CollectRing_1P			; if not, branch
 
 ; CollectRing_2P:
@@ -25089,7 +25074,7 @@ loc_121B8:
 ; ===========================================================================
 
 loc_121D0:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.w	Obj37_Delete
 	bra.s	loc_121B8
 ; ===========================================================================
@@ -25400,7 +25385,7 @@ Obj26_Init:
 +
 	move.b	#$46,collision_flags(a0)
 	move.b	subtype(a0),anim(a0)	; subtype = icon to display
-	tst.w	(Two_player_mode).w	; is it two player mode?
+	tst.b	(Two_player_mode).w	; is it two player mode?
 	beq.s	Obj26_Main		; if not, branch
 	move.b	#9,anim(a0)		; use '?' icon
 ;obj_26_sub_2:
@@ -25455,7 +25440,7 @@ SolidObject_Monitor_Sonic:
 SolidObject_Monitor_Tails:
 	btst	d6,status(a0)			; is Tails standing on the monitor?
 	bne.s	Obj26_ChkOverEdge		; if yes, branch
-	tst.w	(Two_player_mode).w		; is it two player mode?
+	tst.b	(Two_player_mode).w		; is it two player mode?
 	beq.w	SolidObject_cont		; if not, branch
 	; in one player mode monitors always behave as solid for Tails
 	cmpi.b	#AniIDSonAni_Roll,anim(a1)	; is Tails spinning?
@@ -25575,7 +25560,7 @@ Obj2E_Init:
 	moveq	#0,d0
 	move.b	anim(a0),d0
 
-	tst.w	(Two_player_mode).w	; is it two player mode?
+	tst.b	(Two_player_mode).w	; is it two player mode?
 	beq.s	loc_128C6		; if not, branch
 	; give 'random' item in two player mode
 	move.w	(Level_frame_counter).w,d0	; use the timer to determine which item
@@ -27191,7 +27176,7 @@ Obj34_Wait:
 Obj34_BackgroundIn:	; the blue background (green when playing as Knuckles), coming in
 	moveq	#$10,d0
 	moveq	#8,d1
-	tst.w	(Two_player_mode).w	; if two-player mode is on (1)
+	tst.b	(Two_player_mode).w	; if two-player mode is on (1)
 	sne	d6			; then set d6 to $FF, else set d6 to $00
 	beq.s	+
 	moveq	#$20,d0
@@ -27220,7 +27205,7 @@ Obj34_BottomPartIn:	; the yellow part at the bottom, coming in
 	bmi.w	Obj34_MoveTowardsTargetPosition
 	add.w	d0,d0
 	move.w	#$80*$14/2,d1		; $14 half-cells down (for 2P mode)
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	sne	d6
 	bne.s	+
 	add.w	d1,d1				; double distance down for 1P mode
@@ -27247,7 +27232,7 @@ Obj34_LeftPartIn:	; the red part on the left, coming in
 	tst.w	titlecard_location(a0)
 	bmi.w	Obj34_MoveTowardsTargetPosition
 	move.w	#VRAM_Plane_A_Name_Table,titlecard_vram_dest(a0)
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	move.w	#VRAM_Plane_A_Name_Table_2P,titlecard_vram_dest_2P(a0)
 +
@@ -27325,7 +27310,7 @@ Obj34_LeftPartOut:	; red part on the left, going out
 	add.w	d0,d0
 	move.w	#VRAM_Plane_A_Name_Table,titlecard_vram_dest(a0)
 	add.w	d0,titlecard_vram_dest(a0)
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	move.w	#VRAM_Plane_A_Name_Table_2P,titlecard_vram_dest_2P(a0)
 	add.w	d0,titlecard_vram_dest_2P(a0)
@@ -27348,7 +27333,7 @@ Obj34_BottomPartOut:	; yellow part at the bottom, going out
 +
 	add.w	d0,d0
 	move.w	#$80*$14/2,d1		; $14 half-cells down (for 2P mode)
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	sne	d6
 	bne.s	+
 	add.w	d1,d1				; double distance down for 1P mode
@@ -27550,7 +27535,7 @@ Obj39_TimeOver:
 	move.w	#1,(Level_Inactive_flag).w
 ; loc_1403E:
 Obj39_Check2PMode:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	Obj39_Display
 
 	move.w	#0,(Level_Inactive_flag).w
@@ -27783,7 +27768,7 @@ loc_14270:
 	add.b	(Current_Act).w,d0
 	add.w	d0,d0
 	lea	LevelOrder(pc),a1
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	loc_1428C
 	lea	LevelOrder_2P(pc),a1
 
@@ -28764,7 +28749,7 @@ DrawLevelTitleCard:
 	bne.w	loc_15670
 	moveq	#$3F,d5
 	move.l	#make_block_tile_pair(ArtTile_ArtNem_TitleCard+$5A,0,0,0,1),d6
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	loc_155A8
 	moveq	#$1F,d5
 	move.l	#make_block_tile_pair_2p(ArtTile_ArtNem_TitleCard+$5A,0,0,0,1),d6
@@ -28793,7 +28778,7 @@ loc_155C6:
 	subq.w	#1,d1
 	moveq	#7,d5
 	move.l	#make_block_tile_pair(ArtTile_ArtNem_TitleCard+$5C,0,0,1,1),d6
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	loc_155EA
 	moveq	#3,d5
 	move.l	#make_block_tile_pair_2p(ArtTile_ArtNem_TitleCard+$5C,0,0,1,1),d6
@@ -28825,7 +28810,7 @@ loc_15614:
 	subq.w	#1,d1
 	moveq	#$D,d5
 	move.l	#make_block_tile_pair(ArtTile_ArtNem_TitleCard+$58,0,0,0,1),d6 ; VRAM location of graphic to fill on left side
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	loc_15634
 	moveq	#6,d5
 	move.l	#make_block_tile_pair_2p(ArtTile_ArtNem_TitleCard+$58,0,0,0,1),d6 ; VRAM location of graphic to fill on left side (2p)
@@ -28863,7 +28848,7 @@ loc_15670:
 	moveq	#3,d4
 	move.l	#make_block_tile_pair(ArtTile_ArtNem_TitleCard+$5A,0,0,0,1),d5
 	move.l	#make_block_tile_pair(ArtTile_ArtNem_TitleCard+$5C,0,0,1,1),d6
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	moveq	#4,d3
 	moveq	#1,d4
@@ -28900,7 +28885,7 @@ loc_156CE:
 	move.w	#$8F02,VDP_control_port-VDP_data_port(a6)	; VRAM pointer increment: $0002
 	moveq	#7,d5
 	move.l	#make_block_tile_pair(ArtTile_ArtNem_TitleCard+$5A,0,0,0,1),d6
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	moveq	#3,d5
 	move.l	#make_block_tile_pair_2p(ArtTile_ArtNem_TitleCard+$5A,0,0,0,1),d6
@@ -28928,7 +28913,7 @@ loc_15714:
 	; Initialize plane A for both players; we have to do this here as otherwise
 	; it will appear corrupted when the title card leaves.
 	lea	VDP_control_port-VDP_data_port(a6),a5
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	loc_15758
 	lea	(Camera_X_pos_P2).w,a3
 	lea	(Level_Layout).w,a4
@@ -29614,7 +29599,7 @@ RunObjects:
 	bne.s	RunObject ; if not in a level, branch to RunObject
 +
 	move.w	#(LevelOnly_Object_RAM_End-Object_RAM)/object_size-1,d7	; run the first $90 objects in levels
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	RunObject ; if in 2 player competition mode, branch to RunObject
 
 	cmpi.b	#6,(MainCharacter+routine).w
@@ -30012,7 +29997,7 @@ ObjectMove:
 ; input: a0 = the object
 ; loc_163D2:
 MarkObjGone:
-	tst.w	(Two_player_mode).w	; is it two player mode?
+	tst.b	(Two_player_mode).w	; is it two player mode?
 	beq.s	+			; if not, branch
 	bra.w	DisplaySprite
 +
@@ -30034,7 +30019,7 @@ MarkObjGone:
 ; input: d0 = the object's x position
 ; loc_1640A:
 MarkObjGone2:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	bra.w	DisplaySprite
 +
@@ -30056,7 +30041,7 @@ MarkObjGone2:
 ; does nothing instead of calling DisplaySprite in the case of no deletion
 ; loc_1643E:
 MarkObjGone3:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	rts
 +
@@ -30078,7 +30063,7 @@ MarkObjGone3:
 ; input: a0 = the object
 ; loc_16472:
 MarkObjGone_P1:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	MarkObjGone_P2
 	move.w	x_pos(a0),d0
 	andi.w	#$FF80,d0
@@ -30320,7 +30305,7 @@ Anim_End:
 
 ; sub_16604:
 BuildSprites:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.w	BuildSprites_2P
 	lea	(Sprite_Table).w,a2
 	moveq	#0,d5
@@ -31253,7 +31238,7 @@ BuildSprites_P2_MultiDraw_NextObj:
 ; adjust art pointer of object at a0 for 2-player mode
 ; sub_16D6E:
 Adjust2PArtPointer:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	.return
 	move.w	art_tile(a0),d0
 	andi.w	#tile_mask,d0
@@ -31271,7 +31256,7 @@ Adjust2PArtPointer:
 ; adjust art pointer of object at a1 for 2-player mode
 ; sub_16D8A:
 Adjust2PArtPointer2:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	.return
 	move.w	art_tile(a1),d0
 	andi.w	#tile_mask,d0
@@ -31678,7 +31663,7 @@ RingsManager_Main:
 	cmp.w	-4(a2),d4
 	bls.s	-
 	move.w	a2,(Ring_end_addr).w	; update end address
-	tst.w	(Two_player_mode).w	; are we in 2P mode?
+	tst.b	(Two_player_mode).w	; are we in 2P mode?
 	bne.s	+	; if we are, update P2 addresses
 	move.w	a1,(Ring_start_addr_P2).w	; otherwise, copy over P1 addresses
 	move.w	a2,(Ring_end_addr_P2).w
@@ -32248,7 +32233,7 @@ SpecialCNZBumpers_Main:
 	cmp.w	prev_bumper_x(a2),d4
 	bls.s	-
 	move.l	a2,(CNZ_Visible_bumpers_end).w
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	+
 	move.l	a1,(CNZ_Visible_bumpers_start_P2).w
 	move.l	a2,(CNZ_Visible_bumpers_end_P2).w
@@ -32739,7 +32724,7 @@ ObjectsManager_Init:
 	lea	(Off_Objects).l,a0	; Next, we load the first pointer in the object layout list pointer index,
 	movea.l	a0,a1			; then copy it for quicker use later.
 	adda.w	(a0,d0.w),a0		; (Point1 * 2) + $003E
-	tst.w	(Two_player_mode).w	; skip if not in 2-player vs mode
+	tst.b	(Two_player_mode).w	; skip if not in 2-player vs mode
 	beq.s	+
 	cmpi.b	#casino_night_zone,(Current_Zone).w	; skip if not Casino Night Zone
 	bne.s	+
@@ -32822,7 +32807,7 @@ loc_17B62:
 	move.l	a0,(Obj_load_addr_left_P2).w
 	move.w	#-1,(Camera_X_pos_last).w	; make sure ObjectsManager_GoingForward is run
 	move.w	#-1,(Camera_X_pos_last_P2).w
-	tst.w	(Two_player_mode).w	; is it two player mode?
+	tst.b	(Two_player_mode).w	; is it two player mode?
 	beq.s	ObjectsManager_Main	; if not, branch
 	addq.b	#2,(Obj_placement_routine).w
 	bra.w	ObjectsManager_2P_Init
@@ -33480,7 +33465,7 @@ return_17FD8:
 AllocateObject:
 	lea	(Dynamic_Object_RAM).w,a1 ; a1=object
 	move.w	#(Dynamic_Object_RAM_End-Dynamic_Object_RAM)/object_size-1,d0 ; search to end of table
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	move.w	#(Dynamic_Object_RAM_2P_End-Dynamic_Object_RAM)/object_size-1,d0 ; search to $BF00 exclusive
 
@@ -34433,7 +34418,7 @@ Obj0D_Index:	offsetTable
 ; ===========================================================================
 ; loc_191DC: Obj_0D_sub_0:
 Obj0D_Init:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	loc_19208
 	move.l	#Obj0D_MapUnc_19656,mappings(a0)
 	move.w	#make_art_tile(ArtTile_ArtNem_2p_Signpost,0,0),art_tile(a0)
@@ -34497,7 +34482,7 @@ loc_192A0:
 	move.b	#4,obj0D_finalanim(a0)
 
 loc_192BC:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.w	loc_19350
 	move.w	#$3C3C,(Loser_Time_Left).w
 	move.w	#SndID_Signpost2P,d0	; play different spinning sound
@@ -34506,7 +34491,7 @@ loc_192BC:
 ; ---------------------------------------------------------------------------
 
 loc_192D6:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	loc_19350
 	tst.b	(Update_HUD_timer_2P).w
 	beq.s	loc_19350
@@ -34532,7 +34517,7 @@ loc_1932E:
 	tst.b	obj0D_finalanim(a0)
 	bne.s	loc_19350
 	move.b	#4,obj0D_finalanim(a0)
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	loc_19350
 	move.w	#$3C3C,(Loser_Time_Left).w
 	move.w	#SndID_Signpost2P,d0
@@ -34564,7 +34549,7 @@ Obj0D_Main_State2:
 	bne.s	loc_19398
 	move.b	#4,routine_secondary(a0) ; => Obj0D_Main_State3
 	move.b	obj0D_finalanim(a0),anim(a0)
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	loc_19398
 	move.b	#6,routine_secondary(a0) ; => Obj0D_Main_State4
 
@@ -34717,7 +34702,7 @@ return_19532:
 ; ===========================================================================
 
 PLCLoad_Signpost:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	return_1958C
 	moveq	#0,d0
 	move.b	mapping_frame(a0),d0
@@ -37959,7 +37944,7 @@ Obj01_ResetLevel:
 	bra.s	Obj01_Finished
 ; ---------------------------------------------------------------------------
 Obj01_ResetLevel_Part2:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	return_1B31A
 	move.b	#0,(Scroll_lock).w
 	move.b	#$A,routine(a0)	; => Obj01_Respawning
@@ -38607,7 +38592,7 @@ Obj02_Control_Joypad2:
 	bne.s	+
 	move.w	(Ctrl_2).w,(Ctrl_2_Logical).w
 +
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	Obj02_Control_Part2
 	bsr.w	TailsCPU_Control
 ; loc_1B9EA:
@@ -40750,7 +40735,7 @@ Obj02_CheckGameOver:
 	cmp.w	y_pos(a0),d0
 	bge.w	return_1CD8E
 	move.b	#2,routine(a0)
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	Obj02_CheckGameOver_2Pmode
 	bra.w	TailsCPU_Despawn
 ; ---------------------------------------------------------------------------
@@ -44166,7 +44151,7 @@ Obj79_Main:
 	lea	(MainCharacter).w,a3 ; a3=character
 	move.b	(Last_star_pole_hit).w,d1
 	bsr.s	Obj79_CheckActivation
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.w	Obj79_Animate
 	lea	(Sidekick).w,a3 ; a3=character
 	move.b	(Last_star_pole_hit_2P).w,d1
@@ -44207,7 +44192,7 @@ Obj79_CheckActivation:
 	move.b	#2,mapping_frame(a1)
 	move.w	#$20,objoff_36(a1)
 	move.w	a0,parent(a1)
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	loc_1F206
 	cmpi.b	#7,(Emerald_count).w
 	beq.s	loc_1F206
@@ -45979,7 +45964,7 @@ Obj49_Init:
 	bset	#render_flags.explicit_height,render_flags(a0)
 ; loc_20BEA:
 Obj49_ChkDel:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	+
 	move.w	x_pos(a0),d0
 	andi.w	#$FF80,d0
@@ -46077,7 +46062,7 @@ Obj31_Init:
 
 ; loc_20E46:
 Obj31_Main:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	+
 	move.w	x_pos(a0),d0
 	andi.w	#$FF80,d0
@@ -46155,7 +46140,7 @@ Obj74_Main:
 	addq.w	#1,d3
 	move.w	x_pos(a0),d4
 	bsr.w	SolidObject_Always
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	+
 	move.w	x_pos(a0),d0
 	andi.w	#$FF80,d0
@@ -46637,7 +46622,7 @@ Obj06:
 	move.b	routine(a0),d0
 	move.w	Obj06_Index(pc,d0.w),d1
 	jsr	Obj06_Index(pc,d1.w)
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	Obj06_ChkDel
 	rts
 ; ---------------------------------------------------------------------------
@@ -55182,7 +55167,7 @@ Obj75_Main:
 	move.w	sub6_y_pos(a1),y_pos(a1)
 
 loc_28D3E:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	jmpto	JmpTo22_DisplaySprite
 ; ===========================================================================
@@ -55754,7 +55739,7 @@ Obj7A_SubObjectLoop_End:
 ; loc_2948E:
 Obj7A_Main:
 	bsr.s	loc_294F4
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+	; if 2P VS mode is off, branch
 	jmpto	JmpTo24_DisplaySprite
 ; ===========================================================================
@@ -55861,7 +55846,7 @@ Obj7B:
 	move.b	routine(a0),d0
 	move.w	Obj7B_Index(pc,d0.w),d1
 	jsr	Obj7B_Index(pc,d1.w)
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	jmpto	JmpTo25_DisplaySprite
 ; ===========================================================================
@@ -56578,7 +56563,7 @@ loc_2A1A8:
 loc_2A1B4:
 	move.w	x_pos(a0),d4
 	jsrto	JmpTo22_SolidObject
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	jmpto	JmpTo26_DisplaySprite
 ; ---------------------------------------------------------------------------
@@ -57097,7 +57082,7 @@ Obj83_Main:
 	move.w	#9,d3
 	move.w	(sp)+,d4
 	jsrto	JmpTo7_PlatformObject
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	.notTwoPlayerMode
 	jmpto	JmpTo27_DisplaySprite
 ; ===========================================================================
@@ -57396,7 +57381,7 @@ Obj85:
 	move.w	Obj85_Index(pc,d0.w),d1
 	jsr	Obj85_Index(pc,d1.w)
 	move.w	#object_display_list_size*4,d0
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	jmpto	JmpTo4_DisplaySprite3
 ; ===========================================================================
@@ -58265,7 +58250,7 @@ ObjD3:
 	subq.w	#1,(Ring_count_2P).w
 	ori.b	#$81,(Update_HUD_rings_2P).w
 +
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	BranchTo_JmpTo44_DeleteObject
 +
 	tst.w	(Ring_count).w
@@ -59168,7 +59153,7 @@ SlotMachine_Subroutine2:
 	dbf	d1,-				; Loop for aoo pixel rows
 
 	move.l	#(Block_Table+$1000)&$FFFFFF,d1	; Source
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	addi.w	#tiles_to_bytes(ArtTile_ArtUnc_CNZSlotPics_1_2p-ArtTile_ArtUnc_CNZSlotPics_1),d2
 +
@@ -59477,7 +59462,7 @@ loc_2C5AE:
 	move.w	d0,x_pos(a0)
 
 loc_2C5C4:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	jmpto	JmpTo30_DisplaySprite
 ; ---------------------------------------------------------------------------
@@ -72451,7 +72436,7 @@ loc_36776:
 ; ---------------------------------------------------------------------------
 ;loc_36788:
 Obj_DeleteBehindScreen:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	jmp	(DisplaySprite).l
 +
@@ -72646,7 +72631,7 @@ AnimChk_End:
 ; ---------------------------------------------------------------------------
 ;loc_368F8:
 Obj_DeleteOffScreen:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	jmp	(DisplaySprite).l
 +
@@ -76557,7 +76542,7 @@ ObjA7_Poof:
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 loc_39182:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	jmpto	JmpTo45_DisplaySprite
 ; ---------------------------------------------------------------------------
@@ -84748,7 +84733,7 @@ Touch_ChkValue:
 	cmpi.b	#6,d0			; is touch response $46?
 	beq.s	Touch_Monitor		; if yes, branch
 	move.w	(MainCharacter+invulnerable_time).w,d0
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	move.w	invulnerable_time(a0),d0
 +
@@ -84787,7 +84772,7 @@ Touch_Monitor:
 .breakMonitor:
 	cmpa.w	#MainCharacter,a0
 	beq.s	+
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	return_3F78A
 +
 	cmpi.b	#AniIDSonAni_Roll,anim(a0)
@@ -84929,7 +84914,7 @@ HurtCharacter:
 	move.w	(Ring_count).w,d0
 	cmpa.w	#MainCharacter,a0
 	beq.s	loc_3F88C
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	Hurt_Sidekick
 	move.w	(Ring_count_2P).w,d0
 
@@ -85523,7 +85508,7 @@ Dynamic_Null:
 
 Dynamic_HTZ:
 	; More unused two-player code...
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.w	Dynamic_Normal
 
 ;.doMountainArt:
@@ -85660,7 +85645,7 @@ Dynamic_CNZ:
 ; ---------------------------------------------------------------------------
 +
 	lea	(Animated_CNZ).l,a2
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	Dynamic_Normal
 	lea	(Animated_CNZ_2P).l,a2
 	bra.s	Dynamic_Normal
@@ -86178,7 +86163,7 @@ LoadAnimatedBlocks:
 	add.w	d0,d0
 	move.w	AnimPatMaps(pc,d0.w),d0
 	lea	AnimPatMaps(pc,d0.w),a0
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	+
 	cmpi.b	#casino_night_zone,(Current_Zone).w
 	bne.s	+
@@ -86189,7 +86174,7 @@ LoadAnimatedBlocks:
 	lea	(Block_Table).w,a1
 	adda.w	(a0)+,a1
 	move.w	(a0)+,d1
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	LoadLevelBlocks_2P
 
 ; loc_40330:
@@ -87157,7 +87142,7 @@ AddPoints:
 
 ; sub_40D42:
 AddPoints2:
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	AddPoints
 	cmpa.w	#MainCharacter,a3
 	beq.s	AddPoints
@@ -87191,7 +87176,7 @@ AddPoints2:
 HudUpdate:
 	nop
 	lea	(VDP_data_port).l,a6
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.w	loc_40F50
 	tst.w	(Debug_mode_flag).w	; is debug mode on?
 	bne.w	loc_40E9A	; if yes, branch
@@ -87482,7 +87467,7 @@ Hud_InitRings:
 Hud_Base:
 	lea	(VDP_data_port).l,a6
 	bsr.w	Hud_Lives
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	bne.s	loc_410BC
 	move.l	#vdpComm(tiles_to_bytes(ArtTile_HUD_Score_E),VRAM,WRITE),(VDP_control_port).l
 	lea	Hud_TilesBase(pc),a2
@@ -88119,7 +88104,7 @@ Debug_ExitDebugMode:
 	lea	(MainCharacter).w,a1 ; a1=character
 	move.l	#MapUnc_Sonic,mappings(a1)
 	move.w	#make_art_tile(ArtTile_ArtUnc_Sonic,0,0),art_tile(a1)
-	tst.w	(Two_player_mode).w
+	tst.b	(Two_player_mode).w
 	beq.s	.notTwoPlayerMode
 	move.w	#make_art_tile_2p(ArtTile_ArtUnc_Sonic,0,0),art_tile(a1)
 ; loc_41C82:

@@ -1834,7 +1834,7 @@ Title_screen_option:		ds.b	1
 				ds.b	1	; $FFFFFF87 ; unused
 Current_Zone_2P:		ds.b	1
 Current_Act_2P:			ds.b	1
-Two_player_mode_copy:		ds.w	1
+				ds.b	2	; $FFFFFF8A-$FFFFFF8B ; unused
 Options_menu_box:		ds.b	1
 				ds.b	1	; $FFFFFF8D ; unused
 Total_Bonus_Countdown:		ds.w	1
@@ -1867,7 +1867,8 @@ S1_hidden_credits_flag:		ds.b	1	; Leftover from Sonic 1. This NEEDs to be after 
 Correct_cheat_entries:		ds.w	1
 Correct_cheat_entries_2:	ds.w	1	; for 14 continues or 7 emeralds codes
 
-Two_player_mode:		ds.w	1	; flag (0 for main game)
+Two_player_mode:		ds.b	1	; flag (0 for main game)
+Two_player_mode_copy:		ds.b	1	; used for Special Stages to determine where to return the player to
 unk_FFDA:			ds.w	1	; Written to once at title screen, never read from
 unk_FFDC:			ds.b	1	; Written to near loc_175EA, never read from
 unk_FFDD:			ds.b	1	; Written to near loc_175EA, never read from
