@@ -4310,7 +4310,7 @@ TitleScreen:
 	move.b	#0,(Last_star_pole_hit).w
 	move.b	#0,(Last_star_pole_hit_2P).w
 	move.w	#0,(Debug_placement_mode).w
-	move.w	#0,(Demo_mode_flag).w
+	move.b	#0,(Demo_mode_flag).w
 	move.w	#0,(PalCycle_Timer).w
 	move.b	#0,(Two_player_mode).w
 	move.b	#0,(Level_started_flag).w
@@ -4585,7 +4585,7 @@ TitleScreen_Demo:
 	blo.s	+
 	move.w	#0,(Demo_number).w
 +
-	move.w	#1,(Demo_mode_flag).w
+	move.b	#1,(Demo_mode_flag).w
 	move.b	#GameModeID_Demo,(Game_Mode).w ; => Level (Demo mode)
 	cmpi.w	#emerald_hill_zone_act_1,(Current_ZoneAndAct).w
 	bne.s	+
@@ -4745,15 +4745,10 @@ MusicList2: zoneOrderedTable 1,1
 ; loc_3EC4:
 Level:
 	bset	#GameModeFlag_TitleCard,(Game_Mode).w ; add $80 to screen mode (for pre level sequence)
-	tst.w	(Demo_mode_flag).w	; test the old flag for the credits demos (now unused)
-	bmi.s	+
 	move.b	#MusID_FadeOut,d0
 	bsr.w	PlaySound	; fade out music
-+
 	bsr.w	ClearPLC
 	bsr.w	Pal_FadeToBlack
-	tst.w	(Demo_mode_flag).w
-	bmi.s	Level_ClrRam
 	move	#$2700,sr
 	bsr.w	ClearScreen
 	jsr	(LoadTitleCard).l ; load title card patterns
@@ -4885,8 +4880,6 @@ Level_WaterPal:
 	move.b	(Saved_Water_move).w,(Water_fullscreen_flag).w
 ; loc_40AE:
 Level_GetBgm:
-	tst.w	(Demo_mode_flag).w
-	bmi.s	+
 	moveq	#0,d0
 	move.b	(Current_Zone).w,d0
 	lea_	MusicList,a1
@@ -5004,14 +4997,6 @@ Level_FromCheckpoint:
 	move.b	(Current_Zone).w,d0	; load zone value
 	lsl.w	#2,d0
 	movea.l	(a1,d0.w),a1
-	tst.w	(Demo_mode_flag).w
-	bpl.s	+
-	lea	(EndingDemoScriptPointers).l,a1
-	move.w	(Ending_demo_number).w,d0
-	subq.w	#1,d0
-	lsl.w	#2,d0
-	movea.l	(a1,d0.w),a1
-+
 	move.b	1(a1),(Demo_press_counter).w
     if emerald_hill_zone<>0
 	cmpi.b	#emerald_hill_zone,(Current_Zone).w
@@ -5023,13 +5008,6 @@ Level_FromCheckpoint:
 	move.b	1(a1),(Demo_press_counter_2P).w
 +
 	move.w	#$668,(Demo_Time_left).w
-	tst.w	(Demo_mode_flag).w
-	bpl.s	+
-	move.w	#$21C,(Demo_Time_left).w
-	cmpi.w	#4,(Ending_demo_number).w
-	bne.s	+
-	move.w	#$1FE,(Demo_Time_left).w
-+
 	tst.b	(Water_flag).w
 	beq.s	++
 	moveq	#PalID_HPZ_U,d0
@@ -5650,7 +5628,7 @@ OilSlides_Chunks_End:
 
 ; sub_481E:
 MoveSonicInDemo:
-	tst.w	(Demo_mode_flag).w	; is demo mode on?
+	tst.b	(Demo_mode_flag).w	; is demo mode on?
 	bne.w	MoveDemo_On	; if yes, branch
 	rts
 ; ---------------------------------------------------------------------------
@@ -5710,19 +5688,13 @@ MoveDemo_On:
 	move.b	(Ctrl_1_Press).w,d0
 	or.b	(Ctrl_2_Press).w,d0
 	andi.b	#button_start_mask,d0
-	beq.s	+
-	tst.w	(Demo_mode_flag).w
-	bmi.s	+
+	beq.s	MoveDemo_On_P1
 	move.b	#GameModeID_TitleScreen,(Game_Mode).w ; => TitleScreen
-+
+; loc_48DA:
+MoveDemo_On_P1:
 	lea	(DemoScriptPointers).l,a1 ; load pointer to input data
 	moveq	#0,d0
 	move.b	(Current_Zone).w,d0
-	cmpi.b	#GameModeID_SpecialStage,(Game_Mode).w ; special stage mode?
-	bne.s	MoveDemo_On_P1		; if yes, branch
-	moveq	#6,d0
-; loc_48DA:
-MoveDemo_On_P1:
 	lsl.w	#2,d0
 	movea.l	(a1,d0.w),a1
 
@@ -5841,43 +5813,6 @@ DemoScriptPointers: zoneOrderedTable 4,1
 	zoneTableEntry.l Demo_ARZ	; ARZ
 	zoneTableEntry.l Demo_EHZ	; SCZ
     zoneTableEnd
-; ---------------------------------------------------------------------------
-; dword_498C:
-EndingDemoScriptPointers:
-	; Empty, since Sonic 2 doesn't have demos during its credits.
-; ---------------------------------------------------------------------------
-	; Leftover unused demo data from Sonic 1.
-	; It involves Sonic slowly running right, jumping once,
-	; then running at full speed for a few seconds.
-	; Interestingly, this lines up with our knowledge of
-	; the fabled Tokyo Game Show prototype.
-	; See it in action: https://youtu.be/S8_IAfQbUu0
-	demoinput ,	$8C
-	demoinput R,	$38
-	demoinput ,	$43
-	demoinput R,	$5D
-	demoinput ,	$6B
-	demoinput R,	$60
-	demoinput ,	$30
-	demoinput R,	$2D
-	demoinput ,	$22
-	demoinput R,	4
-	demoinput RC,	$31
-	demoinput R,	9
-	demoinput ,	$2F
-	demoinput R,	$16
-	demoinput ,	$10
-	demoinput R,	$47
-	demoinput ,	$1B
-	demoinput R,	$100
-	demoinput R,	$CB
-	demoinput ,	1
-	demoinput ,	1
-	demoinput ,	1
-	demoinput ,	1
-	demoinput ,	1
-
-
 
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -84194,7 +84129,7 @@ Obj8A_Init:
 	move.l	#Obj8A_MapUnc_3EB4E,mappings(a0)
 	move.w	#make_art_tile($05A0,0,0),art_tile(a0)
 	jsrto	JmpTo65_Adjust2PArtPointer
-	move.w	(Ending_demo_number).w,d0
+	;move.w	(Ending_demo_number).w,d0
 	move.b	d0,mapping_frame(a0)
 	move.b	#0,render_flags(a0)
 	move.b	#0,priority(a0)
