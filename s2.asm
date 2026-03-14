@@ -4575,22 +4575,24 @@ TitleScreen_Demo:
 	bsr.w	PlaySound
 
 	move.w	(Demo_number).w,d0
-	andi.w	#7,d0
+	add.w	d0,d0
 	add.w	d0,d0
 	move.w	DemoLevels(pc,d0.w),d0
 	move.w	d0,(Current_ZoneAndAct).w
 
+	move.w	(Demo_number).w,d0
+	add.w	d0,d0
+	add.w	d0,d0
+	move.w	DemoLevels+2(pc,d0.w),d0
+	move.b	d0,(Two_player_mode).w
+
 	addq.w	#1,(Demo_number).w
-	cmpi.w	#(DemoLevels_End-DemoLevels)/2,(Demo_number).w
+	cmpi.w	#(DemoLevels_End-DemoLevels)/4,(Demo_number).w
 	blo.s	+
 	move.w	#0,(Demo_number).w
 +
 	move.b	#1,(Demo_mode_flag).w
 	move.b	#GameModeID_Demo,(Game_Mode).w ; => Level (Demo mode)
-	cmpi.w	#emerald_hill_zone_act_1,(Current_ZoneAndAct).w
-	bne.s	+
-	move.b	#1,(Two_player_mode).w
-+
 	move.b	#3,(Life_count).w
 	move.b	#3,(Life_count_2P).w
 
@@ -4609,10 +4611,10 @@ TitleScreen_Demo:
 ; ===========================================================================
 ; word_3DAC:
 DemoLevels:
-	dc.w	emerald_hill_zone_act_1		; EHZ (2P)
-	dc.w	chemical_plant_zone_act_1	; CPZ
-	dc.w	aquatic_ruin_zone_act_1		; ARZ
-	dc.w	casino_night_zone_act_1		; CNZ
+	dc.w	emerald_hill_zone_act_1,	1	; EHZ (2P)
+	dc.w	chemical_plant_zone_act_1,	0	; CPZ
+	dc.w	aquatic_ruin_zone_act_1,	0	; ARZ
+	dc.w	casino_night_zone_act_1,	0	; CNZ
 DemoLevels_End:
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -4997,13 +4999,14 @@ Level_FromCheckpoint:
 	lsl.w	#2,d0
 	movea.l	(a1,d0.w),a1
 	move.b	1(a1),(Demo_press_counter).w
-    if emerald_hill_zone<>0
-	cmpi.b	#emerald_hill_zone,(Current_Zone).w
-    else
-	tst.b	(Current_Zone).w	; emerald_hill_zone
-    endif
-	bne.s	+
-	lea	(Demo_EHZ_Tails).l,a1
+
+	tst.b	(Two_player_mode).w	; is this a two-player demo?
+	beq.s	+			; if not, branch
+	lea	(DemoScriptPointers2P).l,a1
+	moveq	#0,d0
+	move.b	(Current_Zone).w,d0	; load zone value
+	lsl.w	#2,d0
+	movea.l	(a1,d0.w),a1
 	move.b	1(a1),(Demo_press_counter_2P).w
 +
 	move.w	#$668,(Demo_Time_left).w
@@ -5659,11 +5662,18 @@ MoveSonicInDemo:
 	andi.w	#$3FF,(Demo_button_index).w ; wrap at max button press changes 1024
 ; loc_486A:
 MoveDemo_Record_P2:
-	cmpi.b	#emerald_hill_zone,(Current_Zone).w
-	bne.s	++	; rts
-	lea	($FEC000).l,a1		; output location of recorded player 2 demo? (unknown)
+	tst.b	(Two_player_mode).w	; is this a two-player demo?
+	beq.s	++			; if not, branch
+
+	; calculate output location of recorded player 2 demo?
+	lea	(DemoScriptPointers2P).l,a1
+	moveq	#0,d0
+	move.b	(Current_Zone).w,d0
+	lsl.w	#2,d0
+	movea.l	(a1,d0.w),a1
 	move.w	(Demo_button_index_2P).w,d0
 	adda.w	d0,a1
+
 	move.b	(Ctrl_2_Held).w,d0	; load input of player 2
 	cmp.b	(a1),d0			; is same button held?
 	bne.s	+			; if not, branch
@@ -5735,9 +5745,14 @@ MoveDemo_On_P1:
 	addq.w	#2,(Demo_button_index).w ; advance to next button press
 ; loc_4908:
 MoveDemo_On_P2:
-	cmpi.b	#emerald_hill_zone,(Current_Zone).w
-	bne.s	MoveDemo_On_SkipP2 ; if it's not the EHZ demo, branch to skip player 2
-	lea	(Demo_EHZ_Tails).l,a1
+	tst.b	(Two_player_mode).w	; is this a two-player demo?
+	beq.s	MoveDemo_On_SkipP2	; if not, branch
+
+	lea	(DemoScriptPointers2P).l,a1 ; load pointer to input data
+	moveq	#0,d0
+	move.b	(Current_Zone).w,d0
+	lsl.w	#2,d0
+	movea.l	(a1,d0.w),a1
 
 	; same as the corresponding remainder of MoveDemo_On_P1, but for player 2
 	move.w	(Demo_button_index_2P).w,d0
@@ -5787,7 +5802,7 @@ MoveDemo_On_SkipP2:
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; DEMO SCRIPT POINTERS
+; DEMO SCRIPT POINTERS FOR PLAYER 1
 
 ; Contains an array of pointers to the script controlling the players actions
 ; to use for each level.
@@ -5811,6 +5826,31 @@ DemoScriptPointers: zoneOrderedTable 4,1
 	zoneTableEntry.l Demo_EHZ	; DEZ
 	zoneTableEntry.l Demo_ARZ	; ARZ
 	zoneTableEntry.l Demo_EHZ	; SCZ
+    zoneTableEnd
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; DEMO SCRIPT POINTERS FOR PLAYER 2
+; ---------------------------------------------------------------------------
+; off_4948:
+DemoScriptPointers2P: zoneOrderedTable 4,1
+	zoneTableEntry.l Demo_EHZ_Tails	; EHZ
+	zoneTableEntry.l Demo_EHZ_Tails	; Zone 1
+	zoneTableEntry.l Demo_EHZ_Tails	; WZ
+	zoneTableEntry.l Demo_EHZ_Tails	; Zone 3
+	zoneTableEntry.l Demo_EHZ_Tails	; MTZ1,2
+	zoneTableEntry.l Demo_EHZ_Tails	; MTZ3
+	zoneTableEntry.l Demo_EHZ_Tails	; WFZ
+	zoneTableEntry.l Demo_EHZ_Tails	; HTZ
+	zoneTableEntry.l Demo_EHZ_Tails	; HPZ
+	zoneTableEntry.l Demo_EHZ_Tails	; Zone 9
+	zoneTableEntry.l Demo_EHZ_Tails	; OOZ
+	zoneTableEntry.l Demo_EHZ_Tails	; MCZ
+	zoneTableEntry.l Demo_EHZ_Tails	; CNZ
+	zoneTableEntry.l Demo_EHZ_Tails	; CPZ
+	zoneTableEntry.l Demo_EHZ_Tails	; DEZ
+	zoneTableEntry.l Demo_EHZ_Tails	; ARZ
+	zoneTableEntry.l Demo_EHZ_Tails	; SCZ
     zoneTableEnd
 
 
