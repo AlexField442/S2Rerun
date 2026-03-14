@@ -1060,7 +1060,6 @@ loc_BD6:
 ;VintSubE
 Vint_UnusedE:
 	bsr.w	Do_ControllerPal
-	addq.b	#1,(VIntSubE_RunCount).w
 	move.b	#VintID_UnusedE,(Vint_routine).w
 	rts
 ; ===========================================================================
@@ -1419,7 +1418,6 @@ VDP_ClrCRAM:
 	dbf	d7,VDP_ClrCRAM	; clear the CRAM
 
 	clr.l	(Vscroll_Factor).w
-	clr.l	(unk_F61A).w
 	move.l	d1,-(sp)
 
 	dmaFillVRAM 0,$0000,$10000	; fill entire VRAM with 0
@@ -1468,7 +1466,6 @@ ClearScreen:
 	dmaFillVRAM 0,VRAM_Plane_A_Name_Table_2P,VRAM_Plane_Table_Size
 +
 	clr.l	(Vscroll_Factor).w
-	clr.l	(unk_F61A).w
 
     if fixBugs
 	clearRAM Sprite_Table,Sprite_Table_End
@@ -4314,7 +4311,6 @@ TitleScreen:
 	move.b	#0,(Last_star_pole_hit_2P).w
 	move.w	#0,(Debug_placement_mode).w
 	move.w	#0,(Demo_mode_flag).w
-	move.w	#0,(unk_FFDA).w
 	move.w	#0,(PalCycle_Timer).w
 	move.b	#0,(Two_player_mode).w
 	move.b	#0,(Level_started_flag).w
@@ -6574,7 +6570,6 @@ SpecialStage:
 	dmaFillVRAM 0,VRAM_Horiz_Scroll_Table,VRAM_Horiz_Scroll_Table_Size  ; clear Horizontal scroll table
 
 	clr.l	(Vscroll_Factor).w
-	clr.l	(unk_F61A).w
 	clr.b	(SpecialStage_Started).w
 
 ; /------------------------------------------------------------------------\
@@ -12993,7 +12988,6 @@ EndingSequence:
 	stopZ80
 	dmaFillVRAM 0,VRAM_Plane_A_Name_Table,VRAM_Plane_Table_Size ; clear Plane A pattern name table
 	clr.l	(Vscroll_Factor).w
-	clr.l	(unk_F61A).w
 	startZ80
 
 	lea	(VDP_control_port).l,a6
@@ -32436,19 +32430,15 @@ loc_175EA:
 	move.w	x_vel(a0),d1
 	move.w	y_vel(a0),d2
 	jsr	(CalcAngle).l
-	move.b	d0,(unk_FFDC).w
 	sub.w	d3,d0
 	mvabs.w	d0,d1
 	neg.w	d0
 	add.w	d3,d0
-	move.b	d0,(unk_FFDD).w
-	move.b	d1,(unk_FFDF).w
 	cmpi.b	#$38,d1
 	blo.s	loc_17618
 	move.w	d3,d0
 
 loc_17618:
-	move.b	d0,(unk_FFDE).w
 	jsr	(CalcSine).l
 	muls.w	#-$A00,d1
 	asr.l	#8,d1
