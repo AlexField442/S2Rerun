@@ -2037,6 +2037,78 @@ NemDecPrepare:
 ; END OF NEMESIS DECOMPRESSOR
 ; ---------------------------------------------------------------------------
 
+; ===============================================================
+; ---------------------------------------------------------------
+; COMPER compressed art to VRAM loader
+; ---------------------------------------------------------------
+; INPUT:
+;       a0      - Source Offset
+;   d4  - VDP mode
+; ---------------------------------------------------------------
+
+LoadCompArt:
+	lea	(Chunk_Table).l,a1	; get address of compdec buffer
+	bsr.s	CompDec			; decompress art
+
+	lea	(Chunk_Table).l,a3	; get address of compdec buffer again
+	lea	(VDP_data_port).l,a6	; get VDP data port
+
+	move.l	a1,d0			; move end address to d0
+	sub.l	a3,d0			; substract the compdec buffer address from d0
+	lsr.l	#2,d0			; shift 2 bits to right (as we transfer longword per loop)
+	subq.l	#1,d0			; substract 1 from d0 because of dbf
+
+	move	#$2700,sr		; disable interrupts
+	move.l	d4,4(a6)		; set VDP transfer mode
+
+.loop:
+	move.l	(a3)+,(a6)		; transfer next longword
+	dbf	d0,.loop		; loop until d0 = 0
+	move	#$2300,sr		; enable interrupts
+	rts
+; End of function LoadCompArt
+
+; ===============================================================
+; ---------------------------------------------------------------
+; COMPER Decompressor
+; ---------------------------------------------------------------
+; INPUT:
+;       a0      - Source Offset
+;       a1      - Destination Offset
+;
+;  Full credits of this to Vladikcomper
+; ---------------------------------------------------------------
+ 
+CompDec:
+	move.w	(a0)+,d0		; fetch description field
+	moveq	#15,d3			; set bits counter to 16
+
+.mainloop:
+	add.w	d0,d0			; roll description field
+	bcs.s	.flag			; if a flag issued, branch
+	move.w	(a0)+,(a1)+		; otherwise, do uncompressed data
+	dbf	d3,.mainloop		; if bits counter remains, parse the next word
+	bra.s	CompDec			; start a new block
+; ---------------------------------------------------------------
+
+.flag:
+	moveq	#-1,d1			; init displacement
+	move.b	(a0)+,d1		; load displacement
+	add.w	d1,d1
+	moveq	#0,d2			; init copy count
+	move.b	(a0)+,d2		; load copy length
+	beq.s	.end			; if zero, branch
+	lea	(a1,d1.w),a3		; load start copy address
+
+.loop:
+	move.w	(a3)+,(a1)+		; copy given sequence
+	dbf	d2,.loop		; repeat
+	dbf	d3,.mainloop		; if bits counter remains, parse the next word
+	bra.s	CompDec			; start a new block
+
+.end:
+	rts
+; End of function LoadCompArt
 
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -4758,14 +4830,7 @@ Level:
 	moveq	#0,d0
 	move.w	d0,(Level_frame_counter).w
 	move.b	(Current_Zone).w,d0
-
-	; multiply d0 by 12, the size of a level art load block
 	add.w	d0,d0
-	add.w	d0,d0
-	move.w	d0,d1
-	add.w	d0,d0
-	add.w	d1,d0
-
 	lea	(LevelArtPointers).l,a2
 	lea	(a2,d0.w),a2
 	moveq	#0,d0
@@ -4894,6 +4959,7 @@ Level_PlayBgm:
 	move.w	d0,(Level_Music).w	; store level music
 	bsr.w	PlayMusic		; play level music
 	move.b	#ObjID_TitleCard,(TitleCard+id).w ; load Obj34 (level title card) at $FFFFB080
+	jsr	(LoadPerZone).l
 ; loc_40DA:
 Level_TtlCard:
 	move.b	#VintID_TitleCard,(Vint_routine).w
@@ -4919,7 +4985,6 @@ Level_TtlCard:
 
 	clearRAM Horiz_Scroll_Buf,Horiz_Scroll_Buf+HorizontalScrollBuffer.len
 
-	bsr.w	LoadZoneTiles
 	jsrto	JmpTo_loadZoneBlockMaps
 	jsr	(LoadAnimatedBlocks).l
 	jsrto	JmpTo_DrawInitialBG
@@ -6425,68 +6490,6 @@ Demo_ARZ:
 	demoinput R,	$83
 	demoinput ,	$C
 	demoinput S,	1
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-
-
-;sub_4E98:
-LoadZoneTiles:
-	moveq	#0,d0
-	move.b	(Current_Zone).w,d0
-	add.w	d0,d0
-	add.w	d0,d0
-	move.w	d0,d1
-	add.w	d0,d0
-	add.w	d1,d0
-	lea	(LevelArtPointers).l,a2
-	lea	(a2,d0.w),a2
-	move.l	(a2)+,d0
-	andi.l	#$FFFFFF,d0	; 8x8 tile pointer
-	movea.l	d0,a0
-	lea	(Chunk_Table).l,a1
-	bsr.w	KosDec
-	move.w	a1,d3
-	cmpi.b	#hill_top_zone,(Current_Zone).w
-	bne.s	+
-	lea	(ArtKos_HTZ).l,a0
-	lea	(Chunk_Table+tiles_to_bytes(ArtTile_ArtKos_NumTiles_HTZ_Main)).l,a1
-	bsr.w	KosDec	; patch for HTZ
-	move.w	#tiles_to_bytes(ArtTile_ArtKos_NumTiles_HTZ),d3
-+
-	cmpi.b	#wing_fortress_zone,(Current_Zone).w
-	bne.s	+
-	lea	(ArtKos_WFZ).l,a0
-	lea	(Chunk_Table+tiles_to_bytes(ArtTile_ArtKos_NumTiles_WFZ_Main)).l,a1
-	bsr.w	KosDec	; patch for WFZ
-	move.w	#tiles_to_bytes(ArtTile_ArtKos_NumTiles_WFZ),d3
-+
-	cmpi.b	#death_egg_zone,(Current_Zone).w
-	bne.s	+
-	move.w	#tiles_to_bytes(ArtTile_ArtKos_NumTiles_DEZ),d3
-+
-	move.w	d3,d7
-	andi.w	#$FFF,d3
-	lsr.w	#1,d3
-	rol.w	#4,d7
-	andi.w	#$F,d7
-
--	move.w	d7,d2
-	lsl.w	#7,d2
-	lsl.w	#5,d2
-	move.l	#$FFFFFF,d1
-	move.w	d2,d1
-	jsr	(QueueDMATransfer).l
-	move.w	d7,-(sp)
-	move.b	#VintID_TitleCard,(Vint_routine).w
-	bsr.w	WaitForVint
-	bsr.w	RunPLC_RAM
-	move.w	(sp)+,d7
-	move.w	#$800,d3
-	dbf	d7,-
-
-	rts
-; End of function LoadZoneTiles
 
 ; ===========================================================================
 
@@ -19983,6 +19986,148 @@ DrawInitialBG_LoadWholeBackground_512x256:
 	rts
     endif
 ; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutine to load zone/act data
+; ---------------------------------------------------------------------------
+
+LoadPerZone:
+	moveq	#0,d0
+	move.b	(Current_Zone).w,d0		; get zone number
+	mulu.w	#ZoneDefs_size-ZoneDefs,d0	; get offset for zone
+	lea	(ZoneDefs).l,a4
+	adda.l	d0,a4				; jump to relevant zone data
+
+	movea.l	(a4)+,a0			; load 8x8 tiles pointer
+	move.l	#vdpComm(tiles_to_bytes(ArtTile_ArtKos_LevelArt),VRAM,WRITE),d4	; VRAM address for 8x8 tiles
+	jsr	(LoadCompArt).l			; decompress
+	movea.l	(a4)+,a0			; load 16x16 mappings pointer
+	lea	(Block_Table).l,a1		; RAM address for 16x16 mappings
+	jsr	(KosDec).l			; decompress
+	movea.l	(a4)+,a0			; load 256x256 mappings pointer
+	lea	(Chunk_Table).l,a1		; RAM address for 256x256 mappings
+	jsr	(KosDec).l			; decompress
+
+	moveq	#0,d1
+	moveq	#0,d0
+	movea.l	(a4)+,a1			; get pointer for palette ID list
+	move.b	(Current_Act).w,d1
+	move.b	(a1,d1.w),d0			; get palette ID
+	jmp	(PalLoad_Now).l
+
+; ---------------------------------------------------------------------------
+; Zone definitions
+; ---------------------------------------------------------------------------
+
+ZoneDefs:	; Emerald Hill Zone
+		dc.l ArtCmp_EHZ					; 8x8 tiles
+		dc.l BM16_EHZ					; 16x16 mappings
+		dc.l BM128_EHZ					; 256x256 mappings
+;		dc.l Col_EHZ					; collision index (UNUSED)
+		dc.l Zone_Pal_EHZ				; palette id list
+		even
+	ZoneDefs_size:
+
+		dc.l ArtCmp_EHZ
+		dc.l BM16_EHZ
+		dc.l BM128_EHZ
+		dc.l Zone_Pal_Lev1
+
+		dc.l ArtCmp_EHZ
+		dc.l BM16_EHZ
+		dc.l BM128_EHZ
+		dc.l Zone_Pal_WZ
+
+		dc.l ArtCmp_EHZ
+		dc.l BM16_EHZ
+		dc.l BM128_EHZ
+		dc.l Zone_Pal_Lev3
+
+		dc.l ArtCmp_MTZ
+		dc.l BM16_MTZ
+		dc.l BM128_MTZ
+		dc.l Zone_Pal_MTZ
+
+		dc.l ArtCmp_MTZ
+		dc.l BM16_MTZ
+		dc.l BM128_MTZ
+		dc.l Zone_Pal_MTZ
+
+		dc.l ArtCmp_WFZ
+		dc.l BM16_WFZ
+		dc.l BM128_WFZ
+		dc.l Zone_Pal_WFZ
+
+		dc.l ArtCmp_HTZ
+		dc.l BM16_EHZ
+		dc.l BM128_EHZ
+		dc.l Zone_Pal_HTZ
+
+		dc.l ArtCmp_HPZ
+		dc.l BM16_HPZ
+		dc.l BM128_HPZ
+		dc.l Zone_Pal_HPZ
+
+		dc.l ArtCmp_EHZ
+		dc.l BM16_EHZ
+		dc.l BM128_EHZ
+		dc.l Zone_Pal_Lev9
+
+		dc.l ArtCmp_OOZ
+		dc.l BM16_OOZ
+		dc.l BM128_OOZ
+		dc.l Zone_Pal_OOZ
+
+		dc.l ArtCmp_MCZ
+		dc.l BM16_MCZ
+		dc.l BM128_MCZ
+		dc.l Zone_Pal_MCZ
+
+		dc.l ArtCmp_CNZ
+		dc.l BM16_CNZ
+		dc.l BM128_CNZ
+		dc.l Zone_Pal_CNZ
+
+		dc.l ArtCmp_CPZ
+		dc.l BM16_CPZ
+		dc.l BM128_CPZ
+		dc.l Zone_Pal_CPZ
+
+		dc.l ArtCmp_CPZ
+		dc.l BM16_CPZ
+		dc.l BM128_CPZ
+		dc.l Zone_Pal_DEZ
+
+		dc.l ArtCmp_ARZ
+		dc.l BM16_ARZ
+		dc.l BM128_ARZ
+		dc.l Zone_Pal_ARZ
+
+		dc.l ArtCmp_SCZ
+		dc.l BM16_WFZ
+		dc.l BM128_WFZ
+		dc.l Zone_Pal_SCZ
+		even
+
+; ---------------------------------------------------------------------------
+; Palette IDs
+; ---------------------------------------------------------------------------
+
+Zone_Pal_EHZ:	dc.b	PalID_EHZ, PalID_EHZ
+Zone_Pal_Lev1:	dc.b	PalID_EHZ2, PalID_EHZ2
+Zone_Pal_WZ:	dc.b	PalID_WZ, PalID_WZ
+Zone_Pal_Lev3:	dc.b	PalID_EHZ3, PalID_EHZ3
+Zone_Pal_MTZ:	dc.b	PalID_MTZ, PalID_MTZ
+Zone_Pal_WFZ:	dc.b	PalID_WFZ, PalID_WFZ
+Zone_Pal_HTZ:	dc.b	PalID_HTZ, PalID_HTZ
+Zone_Pal_HPZ:	dc.b	PalID_HPZ, PalID_HPZ
+Zone_Pal_Lev9:	dc.b	PalID_EHZ4, PalID_EHZ4
+Zone_Pal_OOZ:	dc.b	PalID_OOZ, PalID_OOZ
+Zone_Pal_MCZ:	dc.b	PalID_MCZ, PalID_MCZ
+Zone_Pal_CNZ:	dc.b	PalID_CNZ, PalID_CNZ
+Zone_Pal_CPZ:	dc.b	PalID_CPZ, PalID_CPZ
+Zone_Pal_DEZ:	dc.b	PalID_DEZ, PalID_DEZ
+Zone_Pal_ARZ:	dc.b	PalID_ARZ, PalID_ARZ
+Zone_Pal_SCZ:	dc.b	PalID_SCZ, PalID_SCZ
 
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ; loadZoneBlockMaps
@@ -19993,19 +20138,9 @@ loadZoneBlockMaps:
 	moveq	#0,d0
 	move.b	(Current_Zone).w,d0
 	add.w	d0,d0
-	add.w	d0,d0
-	move.w	d0,d1
-	add.w	d0,d0
-	add.w	d1,d0
 	lea	(LevelArtPointers).l,a2
 	lea	(a2,d0.w),a2
-	move.l	a2,-(sp)
-	addq.w	#4,a2
-	move.l	(a2)+,d0
-	andi.l	#$FFFFFF,d0	; pointer to block mappings
-	movea.l	d0,a0
-	lea	(Block_Table).w,a1
-	jsrto	JmpTo_KosDec	; load block maps
+
 	cmpi.b	#hill_top_zone,(Current_Zone).w
 	bne.s	+
 	lea	(Block_Table+$980).w,a1
@@ -20027,23 +20162,13 @@ loadZoneBlockMaps:
 	move.w	d0,(a1)+	; change the entry with the adjusted value
 	dbf	d2,-
 +
-	move.l	(a2)+,d0
-	andi.l	#$FFFFFF,d0	; pointer to chunk mappings
-	movea.l	d0,a0
-	lea	(Chunk_Table).l,a1
-	jsrto	JmpTo_KosDec
 	bsr.w	loadLevelLayout
-	movea.l	(sp)+,a2	; zone specific pointer in LevelArtPointers
-	addq.w	#4,a2
+	addq.w	#1,a2
 	moveq	#0,d0
 	move.b	(a2),d0	; PLC2 ID
 	beq.s	+
 	jsrto	JmpTo_LoadPLC
 +
-	addq.w	#4,a2
-	moveq	#0,d0
-	move.b	(a2),d0	; palette ID
-	jsrto	JmpTo_PalLoad_Now
 	rts
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -87782,11 +87907,9 @@ cur_zone_id := 0
 cur_zone_str := "0"
 
 ; macro for declaring a "main level load block" (MLLB)
-levartptrs macro plc1,plc2,palette,art,map16x16,map128x128
-	!org LevelArtPointers+zone_id_{cur_zone_str}*12
-	dc.l (plc1<<24)|art
-	dc.l (plc2<<24)|map16x16
-	dc.l (palette<<24)|map128x128
+levartptrs macro plc1,plc2
+	!org LevelArtPointers+zone_id_{cur_zone_str}*2
+	dc.b plc1, plc2
 cur_zone_id := cur_zone_id+1
 cur_zone_str := "\{cur_zone_id}"
     endm
@@ -87794,23 +87917,23 @@ cur_zone_str := "\{cur_zone_id}"
 ; BEGIN SArt_Ptrs Art_Ptrs_Array[17]
 ; dword_42594: MainLoadBlocks: saArtPtrs:
 LevelArtPointers:
-	levartptrs PLCID_Ehz1,        PLCID_Ehz2,      PalID_EHZ,  ArtKos_EHZ, BM16_EHZ, BM128_EHZ ; EHZ    ; EMERALD HILL ZONE
-	levartptrs PLCID_MilesLife2P, PLCID_MilesLife, PalID_EHZ2, ArtKos_EHZ, BM16_EHZ, BM128_EHZ ; Zone 1 ; LEVEL 1 (UNUSED)
-	levartptrs PLCID_TailsLife2P, PLCID_TailsLife, PalID_WZ,   ArtKos_EHZ, BM16_EHZ, BM128_EHZ ; WZ     ; WOOD ZONE (UNUSED)
-	levartptrs PLCID_Unused1,     PLCID_Unused2,   PalID_EHZ3, ArtKos_EHZ, BM16_EHZ, BM128_EHZ ; Zone 3 ; LEVEL 3 (UNUSED)
-	levartptrs PLCID_Mtz1,        PLCID_Mtz2,      PalID_MTZ,  ArtKos_MTZ, BM16_MTZ, BM128_MTZ ; MTZ1,2 ; METROPOLIS ZONE ACTS 1 & 2
-	levartptrs PLCID_Mtz1,        PLCID_Mtz2,      PalID_MTZ,  ArtKos_MTZ, BM16_MTZ, BM128_MTZ ; MTZ3   ; METROPOLIS ZONE ACT 3
-	levartptrs PLCID_Wfz1,        PLCID_Wfz2,      PalID_WFZ,  ArtKos_SCZ, BM16_WFZ, BM128_WFZ ; WFZ    ; WING FORTRESS ZONE
-	levartptrs PLCID_Htz1,        PLCID_Htz2,      PalID_HTZ,  ArtKos_EHZ, BM16_EHZ, BM128_EHZ ; HTZ    ; HILL TOP ZONE
-	levartptrs PLCID_Hpz1,        PLCID_Hpz2,      PalID_HPZ,  ArtKos_HPZ, BM16_HPZ, BM128_HPZ ; HPZ    ; HIDDEN PALACE ZONE (UNUSED)
-	levartptrs PLCID_Unused3,     PLCID_Unused4,   PalID_EHZ4, ArtKos_EHZ, BM16_EHZ, BM128_EHZ ; Zone 9 ; LEVEL 9 (UNUSED)
-	levartptrs PLCID_Ooz1,        PLCID_Ooz2,      PalID_OOZ,  ArtKos_OOZ, BM16_OOZ, BM128_OOZ ; OOZ    ; OIL OCEAN ZONE
-	levartptrs PLCID_Mcz1,        PLCID_Mcz2,      PalID_MCZ,  ArtKos_MCZ, BM16_MCZ, BM128_MCZ ; MCZ    ; MYSTIC CAVE ZONE
-	levartptrs PLCID_Cnz1,        PLCID_Cnz2,      PalID_CNZ,  ArtKos_CNZ, BM16_CNZ, BM128_CNZ ; CNZ    ; CASINO NIGHT ZONE
-	levartptrs PLCID_Cpz1,        PLCID_Cpz2,      PalID_CPZ,  ArtKos_CPZ, BM16_CPZ, BM128_CPZ ; CPZ    ; CHEMICAL PLANT ZONE
-	levartptrs PLCID_Dez1,        PLCID_Dez2,      PalID_DEZ,  ArtKos_CPZ, BM16_CPZ, BM128_CPZ ; DEZ    ; DEATH EGG ZONE
-	levartptrs PLCID_Arz1,        PLCID_Arz2,      PalID_ARZ,  ArtKos_ARZ, BM16_ARZ, BM128_ARZ ; ARZ    ; AQUATIC RUIN ZONE
-	levartptrs PLCID_Scz1,        PLCID_Scz2,      PalID_SCZ,  ArtKos_SCZ, BM16_WFZ, BM128_WFZ ; SCZ    ; SKY CHASE ZONE
+	levartptrs PLCID_Ehz1,        PLCID_Ehz2	 ; EHZ    ; EMERALD HILL ZONE
+	levartptrs PLCID_MilesLife2P, PLCID_MilesLife	 ; Zone 1 ; LEVEL 1 (UNUSED)
+	levartptrs PLCID_TailsLife2P, PLCID_TailsLife	 ; WZ     ; WOOD ZONE (UNUSED)
+	levartptrs PLCID_Unused1,     PLCID_Unused2	 ; Zone 3 ; LEVEL 3 (UNUSED)
+	levartptrs PLCID_Mtz1,        PLCID_Mtz2	 ; MTZ1,2 ; METROPOLIS ZONE ACTS 1 & 2
+	levartptrs PLCID_Mtz1,        PLCID_Mtz2	 ; MTZ3   ; METROPOLIS ZONE ACT 3
+	levartptrs PLCID_Wfz1,        PLCID_Wfz2	 ; WFZ    ; WING FORTRESS ZONE
+	levartptrs PLCID_Htz1,        PLCID_Htz2	 ; HTZ    ; HILL TOP ZONE
+	levartptrs PLCID_Hpz1,        PLCID_Hpz2	 ; HPZ    ; HIDDEN PALACE ZONE (UNUSED)
+	levartptrs PLCID_Unused3,     PLCID_Unused4	 ; Zone 9 ; LEVEL 9 (UNUSED)
+	levartptrs PLCID_Ooz1,        PLCID_Ooz2	 ; OOZ    ; OIL OCEAN ZONE
+	levartptrs PLCID_Mcz1,        PLCID_Mcz2	 ; MCZ    ; MYSTIC CAVE ZONE
+	levartptrs PLCID_Cnz1,        PLCID_Cnz2	 ; CNZ    ; CASINO NIGHT ZONE
+	levartptrs PLCID_Cpz1,        PLCID_Cpz2	 ; CPZ    ; CHEMICAL PLANT ZONE
+	levartptrs PLCID_Dez1,        PLCID_Dez2	 ; DEZ    ; DEATH EGG ZONE
+	levartptrs PLCID_Arz1,        PLCID_Arz2	 ; ARZ    ; AQUATIC RUIN ZONE
+	levartptrs PLCID_Scz1,        PLCID_Scz2	 ; SCZ    ; SKY CHASE ZONE
 
     if (cur_zone_id<>no_of_zones)&&(MOMPASS=1)
 	message "Warning: Table LevelArtPointers has \{cur_zone_id/1.0} entries, but it should have \{no_of_zones/1.0} entries"
@@ -89522,45 +89645,47 @@ ArtNem_EndingTitle:		BINCLUDE	"art/nemesis/Sonic the Hedgehog 2 image at end of 
 ; All of these are compressed in the Kosinski format.
 
 BM16_EHZ:	BINCLUDE	"mappings/16x16/EHZ.kos"
-ArtKos_EHZ:	BINCLUDE	"art/kosinski/EHZ_HTZ.kos"
-BM16_HTZ:	BINCLUDE	"mappings/16x16/HTZ.kos"
-ArtKos_HTZ:	BINCLUDE	"art/kosinski/HTZ_Supp.kos" ; HTZ pattern suppliment to EHZ level patterns
+ArtCmp_EHZ:	BINCLUDE	"art/comper/EHZ.cmp"
 BM128_EHZ:	BINCLUDE	"mappings/128x128/EHZ_HTZ.kos"
 
 BM16_MTZ:	BINCLUDE	"mappings/16x16/MTZ.kos"
-ArtKos_MTZ:	BINCLUDE	"art/kosinski/MTZ.kos"
+ArtCmp_MTZ:	BINCLUDE	"art/comper/MTZ.cmp"
 BM128_MTZ:	BINCLUDE	"mappings/128x128/MTZ.kos"
 
+ArtCmp_WFZ:	BINCLUDE	"art/comper/WFZ.cmp"
+
+BM16_HTZ:	BINCLUDE	"mappings/16x16/HTZ.kos"
+ArtCmp_HTZ:	BINCLUDE	"art/comper/HTZ.cmp"
+
 BM16_HPZ:	;BINCLUDE	"mappings/16x16/HPZ.kos"
-ArtKos_HPZ:	;BINCLUDE	"art/kosinski/HPZ.kos"
+ArtCmp_HPZ:	;BINCLUDE	"art/comper/HPZ.cmp"
 BM128_HPZ:	;BINCLUDE	"mappings/128x128/HPZ.kos"
 
 BM16_OOZ:	BINCLUDE	"mappings/16x16/OOZ.kos"
-ArtKos_OOZ:	BINCLUDE	"art/kosinski/OOZ.kos"
+ArtCmp_OOZ:	BINCLUDE	"art/comper/OOZ.cmp"
 BM128_OOZ:	BINCLUDE	"mappings/128x128/OOZ.kos"
 
 BM16_MCZ:	BINCLUDE	"mappings/16x16/MCZ.kos"
-ArtKos_MCZ:	BINCLUDE	"art/kosinski/MCZ.kos"
+ArtCmp_MCZ:	BINCLUDE	"art/comper/MCZ.cmp"
 BM128_MCZ:	BINCLUDE	"mappings/128x128/MCZ.kos"
 
 BM16_CNZ:	BINCLUDE	"mappings/16x16/CNZ.kos"
-ArtKos_CNZ:	BINCLUDE	"art/kosinski/CNZ.kos"
+ArtCmp_CNZ:	BINCLUDE	"art/comper/CNZ.cmp"
 BM128_CNZ:	BINCLUDE	"mappings/128x128/CNZ.kos"
 
 BM16_CPZ:	BINCLUDE	"mappings/16x16/CPZ_DEZ.kos"
-ArtKos_CPZ:	BINCLUDE	"art/kosinski/CPZ_DEZ.kos"
+ArtCmp_CPZ:	BINCLUDE	"art/comper/CPZ_DEZ.cmp"
 BM128_CPZ:	BINCLUDE	"mappings/128x128/CPZ_DEZ.kos"
 
 ; This file contains $320 blocks, overflowing the 'Block_table' buffer. This causes
 ; 'TempArray_LayerDef' to be overwritten with (empty) block data.
 ; If only 'fixBugs' could fix this...
 BM16_ARZ:	BINCLUDE	"mappings/16x16/ARZ.kos"
-ArtKos_ARZ:	BINCLUDE	"art/kosinski/ARZ.kos"
+ArtCmp_ARZ:	BINCLUDE	"art/comper/ARZ.cmp"
 BM128_ARZ:	BINCLUDE	"mappings/128x128/ARZ.kos"
 
 BM16_WFZ:	BINCLUDE	"mappings/16x16/WFZ_SCZ.kos"
-ArtKos_SCZ:	BINCLUDE	"art/kosinski/WFZ_SCZ.kos"
-ArtKos_WFZ:	BINCLUDE	"art/kosinski/WFZ_Supp.kos" ; WFZ pattern suppliment to SCZ tiles
+ArtCmp_SCZ:	BINCLUDE	"art/comper/WFZ.cmp"
 BM128_WFZ:	BINCLUDE	"mappings/128x128/WFZ_SCZ.kos"
 
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
