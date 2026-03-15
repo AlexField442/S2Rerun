@@ -1175,10 +1175,7 @@ Tails_InvincibilityStars:
 				ds.b	object_size
 LevelOnly_Object_RAM_End:
 
-				ds.b	$200	; unused
-
-Primary_Collision:		ds.b	$300
-Secondary_Collision:		ds.b	$300
+				ds.b	$800	; unused
 
 SS_Shared_RAM_End:
 
@@ -1590,7 +1587,9 @@ Demo_press_counter:		ds.b	1	; frames remaining until next button press, for play
 				ds.b	1	; $FFFFF793 ; seems unused
 PalChangeSpeed:			ds.w	1
 Collision_addr:			ds.l	1
-				ds.b	$D	; $FFFFF79A-$FFFFF7A6 ; seems unused
+Primary_Collision:		ds.l	1
+Secondary_Collision:		ds.l	1
+				ds.b	5	; $FFFFF7A2-$FFFFF7A6 ; seems unused
 Boss_defeated_flag:		ds.b	1
 				ds.b	2	; $FFFFF7A8-$FFFFF7A9 ; seems unused
 Current_Boss_ID:		ds.b	1
