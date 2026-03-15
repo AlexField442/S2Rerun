@@ -1782,7 +1782,9 @@ Loser_Time_Left:				; 2 bytes
 				ds.b	1	; seconds
 				ds.b	1	; frames
 
-				ds.b	$16	; $FFFFFEFA-$FFFFFF0F ; seems unused
+Obj_layout_addr:		ds.l	1
+Ring_layout_addr:		ds.l	1
+				ds.b	$E	; $FFFFFF02-$FFFFFF0F ; seems unused
 Results_Screen_2P:		ds.w	1	; 0 = act, 1 = zone, 2 = game, 3 = SS, 4 = SS all
 				ds.b	$E	; $FFFFFF12-$FFFFFF1F ; seems unused
 

@@ -19943,9 +19943,20 @@ LoadPerZone:
 	moveq	#0,d1
 	moveq	#0,d0
 	movea.l	(a4)+,a1			; get pointer for palette ID list
-	move.b	(Current_Act).w,d1
+	move.b	(Current_Act).w,d1		; d1 = act
+	move.l	d1,d2
+	add.l	d2,d2				; d2 = act * 2
+	move.l	d2,d4
+	add.l	d4,d4				; d4 = act * 4
 	move.b	(a1,d1.w),d0			; get palette ID
-	jmp	(PalLoad_Now).l
+	jsr	(PalLoad_Now).l
+
+	movea.l	(a4)+,a1			; get pointer for OPL list
+	move.l	(a1,d4.w),(Obj_layout_addr).w	; get pointer for actual OPL data
+
+	movea.l	(a4)+,a1			; get pointer for RPL list
+	move.l	(a1,d4.w),(Ring_layout_addr).w	; get pointer for actual RPL data
+	rts
 
 ; ---------------------------------------------------------------------------
 ; Zone definitions
@@ -19957,6 +19968,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_EHZ					; 256x256 mappings
 		dc.l Col_EHZHTZ					; collision index
 		dc.l Zone_Pal_EHZ				; palette id list
+		dc.l Zone_OPL_EHZ				; object position list
+		dc.l Zone_RPL_EHZ				; ring position list
 		even
 	ZoneDefs_size:
 
@@ -19966,6 +19979,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_EHZ
 		dc.l Col_Invalid
 		dc.l Zone_Pal_Lev1
+		dc.l Zone_OPL_Lev1
+		dc.l Zone_RPL_Lev1
 
 		; Wood Zone (unused)
 		dc.l ArtCmp_EHZ
@@ -19973,6 +19988,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_EHZ
 		dc.l Col_WZ
 		dc.l Zone_Pal_WZ
+		dc.l Zone_OPL_WZ
+		dc.l Zone_RPL_WZ
 
 		; Zone 03 (unused)
 		dc.l ArtCmp_EHZ
@@ -19980,6 +19997,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_EHZ
 		dc.l Col_Invalid
 		dc.l Zone_Pal_Lev3
+		dc.l Zone_OPL_Lev3
+		dc.l Zone_RPL_Lev3
 
 		; Metropolis Zone 1/2
 		dc.l ArtCmp_MTZ
@@ -19987,6 +20006,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_MTZ
 		dc.l Col_MTZ
 		dc.l Zone_Pal_MTZ
+		dc.l Zone_OPL_MTZ
+		dc.l Zone_RPL_MTZ
 
 		; Metropolis Zone 3
 		dc.l ArtCmp_MTZ
@@ -19994,6 +20015,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_MTZ
 		dc.l Col_MTZ
 		dc.l Zone_Pal_MTZ
+		dc.l Zone_OPL_MTZ_2
+		dc.l Zone_RPL_MTZ_2
 
 		; Wing Fortress Zone
 		dc.l ArtCmp_WFZ
@@ -20001,6 +20024,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_WFZ
 		dc.l Col_WFZSCZ
 		dc.l Zone_Pal_WFZ
+		dc.l Zone_OPL_WFZ
+		dc.l Zone_RPL_WFZ
 
 		; Hill Top Zone
 		dc.l ArtCmp_HTZ
@@ -20008,6 +20033,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_EHZ
 		dc.l Col_EHZHTZ
 		dc.l Zone_Pal_HTZ
+		dc.l Zone_OPL_HTZ
+		dc.l Zone_RPL_HTZ
 
 		; Hidden Palace Zone
 		dc.l ArtCmp_HPZ
@@ -20015,6 +20042,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_HPZ
 		dc.l Col_HPZ
 		dc.l Zone_Pal_HPZ
+		dc.l Zone_OPL_HPZ
+		dc.l Zone_RPL_HPZ
 
 		; Zone 09
 		dc.l ArtCmp_EHZ
@@ -20022,6 +20051,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_EHZ
 		dc.l Col_Invalid
 		dc.l Zone_Pal_Lev9
+		dc.l Zone_OPL_Lev9
+		dc.l Zone_RPL_Lev9
 
 		; Oil Ocean Zone
 		dc.l ArtCmp_OOZ
@@ -20029,6 +20060,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_OOZ
 		dc.l Col_OOZ
 		dc.l Zone_Pal_OOZ
+		dc.l Zone_OPL_OOZ
+		dc.l Zone_RPL_OOZ
 
 		; Mystic Cave Zone
 		dc.l ArtCmp_MCZ
@@ -20036,6 +20069,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_MCZ
 		dc.l Col_MCZ
 		dc.l Zone_Pal_MCZ
+		dc.l Zone_OPL_MCZ
+		dc.l Zone_RPL_MCZ
 
 		; Casino Night Zone
 		dc.l ArtCmp_CNZ
@@ -20043,6 +20078,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_CNZ
 		dc.l Col_CNZ
 		dc.l Zone_Pal_CNZ
+		dc.l Zone_OPL_CNZ
+		dc.l Zone_RPL_CNZ
 
 		; Chemical Plant Zone
 		dc.l ArtCmp_CPZ
@@ -20050,6 +20087,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_CPZ
 		dc.l Col_CPZDEZ
 		dc.l Zone_Pal_CPZ
+		dc.l Zone_OPL_CPZ
+		dc.l Zone_RPL_CPZ
 
 		; Death Egg Zone
 		dc.l ArtCmp_CPZ
@@ -20057,6 +20096,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_CPZ
 		dc.l Col_CPZDEZ
 		dc.l Zone_Pal_DEZ
+		dc.l Zone_OPL_DEZ
+		dc.l Zone_RPL_DEZ
 
 		; Aquatic Ruin Zone
 		dc.l ArtCmp_ARZ
@@ -20064,6 +20105,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_ARZ
 		dc.l Col_ARZ
 		dc.l Zone_Pal_ARZ
+		dc.l Zone_OPL_ARZ
+		dc.l Zone_RPL_ARZ
 
 		; Sky Chase Zone
 		dc.l ArtCmp_SCZ
@@ -20071,6 +20114,8 @@ ZoneDefs:	; Emerald Hill Zone
 		dc.l BM128_WFZ
 		dc.l Col_WFZSCZ
 		dc.l Zone_Pal_SCZ
+		dc.l Zone_OPL_SCZ
+		dc.l Zone_RPL_SCZ
 		even
 
 ; ---------------------------------------------------------------------------
@@ -20082,6 +20127,7 @@ Zone_Pal_Lev1:	dc.b	PalID_EHZ2, PalID_EHZ2
 Zone_Pal_WZ:	dc.b	PalID_WZ, PalID_WZ
 Zone_Pal_Lev3:	dc.b	PalID_EHZ3, PalID_EHZ3
 Zone_Pal_MTZ:	dc.b	PalID_MTZ, PalID_MTZ
+Zone_Pal_MTZ_2:	dc.b	PalID_MTZ2, PalID_MTZ2
 Zone_Pal_WFZ:	dc.b	PalID_WFZ, PalID_WFZ
 Zone_Pal_HTZ:	dc.b	PalID_HTZ, PalID_HTZ
 Zone_Pal_HPZ:	dc.b	PalID_HPZ, PalID_HPZ
@@ -20093,6 +20139,50 @@ Zone_Pal_CPZ:	dc.b	PalID_CPZ, PalID_CPZ
 Zone_Pal_DEZ:	dc.b	PalID_DEZ, PalID_DEZ
 Zone_Pal_ARZ:	dc.b	PalID_ARZ, PalID_ARZ
 Zone_Pal_SCZ:	dc.b	PalID_SCZ, PalID_SCZ
+
+; ---------------------------------------------------------------------------
+; Object position list pointers
+; ---------------------------------------------------------------------------
+
+Zone_OPL_EHZ:	dc.l	Objects_EHZ_1, Objects_EHZ_2
+Zone_OPL_Lev1:	dc.l	Objects_Null, Objects_Null
+Zone_OPL_WZ:	dc.l	Objects_Null, Objects_Null
+Zone_OPL_Lev3:	dc.l	Objects_Null, Objects_Null
+Zone_OPL_MTZ:	dc.l	Objects_MTZ_1, Objects_MTZ_2
+Zone_OPL_MTZ_2:	dc.l	Objects_MTZ_3, Objects_MTZ_3
+Zone_OPL_WFZ:	dc.l	Objects_WFZ_1, Objects_WFZ_2
+Zone_OPL_HTZ:	dc.l	Objects_HTZ_1, Objects_HTZ_2
+Zone_OPL_HPZ:	dc.l	Objects_HPZ_1, Objects_HPZ_2
+Zone_OPL_Lev9:	dc.l	Objects_Null, Objects_Null
+Zone_OPL_OOZ:	dc.l	Objects_OOZ_1, Objects_OOZ_2
+Zone_OPL_MCZ:	dc.l	Objects_MCZ_1, Objects_MCZ_2
+Zone_OPL_CNZ:	dc.l	Objects_CNZ_1, Objects_CNZ_2
+Zone_OPL_CPZ:	dc.l	Objects_CPZ_1, Objects_CPZ_2
+Zone_OPL_DEZ:	dc.l	Objects_DEZ_1, Objects_DEZ_2
+Zone_OPL_ARZ:	dc.l	Objects_ARZ_1, Objects_ARZ_2
+Zone_OPL_SCZ:	dc.l	Objects_SCZ_1, Objects_SCZ_2
+
+; ---------------------------------------------------------------------------
+; Ring position list pointers
+; ---------------------------------------------------------------------------
+
+Zone_RPL_EHZ:	dc.l	Rings_EHZ_1, Rings_EHZ_2
+Zone_RPL_Lev1:	dc.l	Rings_Lev1_1, Rings_Lev1_2
+Zone_RPL_WZ:	dc.l	Rings_WZ_1, Rings_WZ_2
+Zone_RPL_Lev3:	dc.l	Rings_Lev3_1, Rings_Lev3_2
+Zone_RPL_MTZ:	dc.l	Rings_MTZ_1, Rings_MTZ_2
+Zone_RPL_MTZ_2:	dc.l	Rings_MTZ_3, Rings_MTZ_4
+Zone_RPL_WFZ:	dc.l	Rings_WFZ_1, Rings_WFZ_2
+Zone_RPL_HTZ:	dc.l	Rings_HTZ_1, Rings_HTZ_2
+Zone_RPL_HPZ:	dc.l	Rings_HPZ_1, Rings_HPZ_2
+Zone_RPL_Lev9:	dc.l	Rings_Lev9_1, Rings_Lev9_2
+Zone_RPL_OOZ:	dc.l	Rings_OOZ_1, Rings_OOZ_2
+Zone_RPL_MCZ:	dc.l	Rings_MCZ_1, Rings_MCZ_2
+Zone_RPL_CNZ:	dc.l	Rings_CNZ_1, Rings_CNZ_2
+Zone_RPL_CPZ:	dc.l	Rings_CPZ_1, Rings_CPZ_2
+Zone_RPL_DEZ:	dc.l	Rings_DEZ_1, Rings_DEZ_2
+Zone_RPL_ARZ:	dc.l	Rings_ARZ_1, Rings_ARZ_2
+Zone_RPL_SCZ:	dc.l	Rings_SCZ_1, Rings_SCZ_2
 
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ; loadZoneBlockMaps
@@ -31542,12 +31632,8 @@ RingsManager_Setup:
 
 	moveq	#0,d5
 	moveq	#0,d0
-	move.w	(Current_ZoneAndAct).w,d0
-	ror.b	#1,d0
-	lsr.w	#6,d0
-	lea	(Off_Rings).l,a1
+	movea.l	(Ring_layout_addr).w,a1	; read objpos list for current zone/act
 	move.w	(a1,d0.w),d0
-	lea	(a1,d0.w),a1
 	lea	(Ring_Positions+6).w,a2	; first ring is left blank
 ; loc_172E0:
 RingsMgr_NextRowOrCol:
@@ -32241,12 +32327,8 @@ ObjectsManager_States: offsetTable
 ; loc_17AB8
 ObjectsManager_Init:
 	addq.b	#2,(Obj_placement_routine).w
-	move.w	(Current_ZoneAndAct).w,d0 ; If level == $0F01 (ARZ 2)...
-	ror.b	#1,d0			; then this yields $0F80...
-	lsr.w	#6,d0			; and this yields $003E.
-	lea	(Off_Objects).l,a0	; Next, we load the first pointer in the object layout list pointer index,
+	movea.l	(Obj_layout_addr).w,a0	; read objpos list for current zone/act
 	movea.l	a0,a1			; then copy it for quicker use later.
-	adda.w	(a0,d0.w),a0		; (Point1 * 2) + $003E
 	tst.b	(Two_player_mode).w	; skip if not in 2-player vs mode
 	beq.s	+
 	cmpi.b	#casino_night_zone,(Current_Zone).w	; skip if not Casino Night Zone
@@ -33064,35 +33146,11 @@ AllocateObject_2P:
 
 return_18028:
 	rts
-; ===========================================================================
-
-;---------------------------------------------------------------------------------------
-; CNZ object layouts for 2-player mode (various objects were deleted)
-;---------------------------------------------------------------------------------------
-
-; Macro for marking the boundaries of an object layout file
-ObjectLayoutBoundary macro
-	dc.w	$FFFF, $0000, $0000
-    endm
-
-    if fixBugs
-	; Sonic Team forgot to put a boundary marker here, meaning the game
-	; could potentially read past the start of the file and load random
-	; objects.
-	ObjectLayoutBoundary
-    endif
-
-; byte_1802A;
-Objects_CNZ1_2P:	BINCLUDE	"level/objects/CNZ_1_2P.bin"
-	ObjectLayoutBoundary
-; byte_18492:
-Objects_CNZ2_2P:	BINCLUDE	"level/objects/CNZ_2_2P.bin"
-	ObjectLayoutBoundary
 
 ; ===========================================================================
-; ----------------------------------------------------------------------------
+; ---------------------------------------------------------------------------
 ; Object 41 - Spring
-; ----------------------------------------------------------------------------
+; ---------------------------------------------------------------------------
 ; Sprite_18888:
 Obj41:
 	moveq	#0,d0
@@ -89764,72 +89822,8 @@ MiscKoz_SpecialObjectLocations:	BINCLUDE	"misc/Special stage object location lis
 	even
 
 ;--------------------------------------------------------------------------------------
-; Filler (free space) (unnecessary; could be replaced with "even")
+; Ring location data
 ;--------------------------------------------------------------------------------------
-	align $100
-
-
-
-
-;--------------------------------------------------------------------------------------
-; Offset index of ring locations
-;  The first commented number on each line is an array index; the second is the
-;  associated zone.
-;--------------------------------------------------------------------------------------
-Off_Rings: zoneOrderedOffsetTable 2,2
-	; EHZ
-	zoneOffsetTableEntry.w  Rings_EHZ_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_EHZ_2	; Act 2
-	; Zone 1
-	zoneOffsetTableEntry.w  Rings_Lev1_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_Lev1_2	; Act 2
-	; WZ
-	zoneOffsetTableEntry.w  Rings_WZ_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_WZ_2	; Act 2
-	; Zone 3
-	zoneOffsetTableEntry.w  Rings_Lev3_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_Lev3_2	; Act 2
-	; MTZ
-	zoneOffsetTableEntry.w  Rings_MTZ_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_MTZ_2	; Act 2
-	; MTZ
-	zoneOffsetTableEntry.w  Rings_MTZ_3	; Act 3
-	zoneOffsetTableEntry.w  Rings_MTZ_4	; Act 4
-	; WFZ
-	zoneOffsetTableEntry.w  Rings_WFZ_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_WFZ_2	; Act 2
-	; HTZ
-	zoneOffsetTableEntry.w  Rings_HTZ_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_HTZ_2	; Act 2
-	; HPZ
-	zoneOffsetTableEntry.w  Rings_HPZ_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_HPZ_2	; Act 2
-	; Zone 9
-	zoneOffsetTableEntry.w  Rings_Lev9_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_Lev9_2	; Act 2
-	; OOZ
-	zoneOffsetTableEntry.w  Rings_OOZ_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_OOZ_2	; Act 2
-	; MCZ
-	zoneOffsetTableEntry.w  Rings_MCZ_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_MCZ_2	; Act 2
-	; CNZ
-	zoneOffsetTableEntry.w  Rings_CNZ_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_CNZ_2	; Act 2
-	; CPZ
-	zoneOffsetTableEntry.w  Rings_CPZ_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_CPZ_2	; Act 2
-	; DEZ
-	zoneOffsetTableEntry.w  Rings_DEZ_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_DEZ_2	; Act 2
-	; ARZ
-	zoneOffsetTableEntry.w  Rings_ARZ_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_ARZ_2	; Act 2
-	; SCZ
-	zoneOffsetTableEntry.w  Rings_SCZ_1	; Act 1
-	zoneOffsetTableEntry.w  Rings_SCZ_2	; Act 2
-    zoneTableEnd
-
 Rings_EHZ_1:	BINCLUDE	"level/rings/EHZ_1.bin"
 Rings_EHZ_2:	BINCLUDE	"level/rings/EHZ_2.bin"
 Rings_Lev1_1:	BINCLUDE	"level/rings/01_1.bin"
@@ -89864,70 +89858,18 @@ Rings_ARZ_1:	BINCLUDE	"level/rings/ARZ_1.bin"
 Rings_ARZ_2:	BINCLUDE	"level/rings/ARZ_2.bin"
 Rings_SCZ_1:	BINCLUDE	"level/rings/SCZ_1.bin"
 Rings_SCZ_2:	BINCLUDE	"level/rings/SCZ_2.bin"
+	even
 
 ; --------------------------------------------------------------------------------------
-; Filler (free space) (unnecessary; could be replaced with "even")
+; Object location data
 ; --------------------------------------------------------------------------------------
-	align $200
 
-; --------------------------------------------------------------------------------------
-; Offset index of object locations
-; --------------------------------------------------------------------------------------
-Off_Objects: zoneOrderedOffsetTable 2,2
-	; EHZ
-	zoneOffsetTableEntry.w  Objects_EHZ_1	; Act 1
-	zoneOffsetTableEntry.w  Objects_EHZ_2	; Act 2
-	; Zone 1
-	zoneOffsetTableEntry.w  Objects_Null	; Act 1
-	zoneOffsetTableEntry.w  Objects_Null	; Act 2
-	; WZ
-	zoneOffsetTableEntry.w  Objects_Null	; Act 1
-	zoneOffsetTableEntry.w  Objects_Null	; Act 2
-	; Zone 3
-	zoneOffsetTableEntry.w  Objects_Null	; Act 1
-	zoneOffsetTableEntry.w  Objects_Null	; Act 2
-	; MTZ
-	zoneOffsetTableEntry.w  Objects_MTZ_1	; Act 1
-	zoneOffsetTableEntry.w  Objects_MTZ_2	; Act 2
-	; MTZ
-	zoneOffsetTableEntry.w  Objects_MTZ_3	; Act 3
-	zoneOffsetTableEntry.w  Objects_MTZ_3	; Act 4
-	; WFZ
-	zoneOffsetTableEntry.w  Objects_WFZ_1	; Act 1
-	zoneOffsetTableEntry.w  Objects_WFZ_2	; Act 2
-	; HTZ
-	zoneOffsetTableEntry.w  Objects_HTZ_1	; Act 1
-	zoneOffsetTableEntry.w  Objects_HTZ_2	; Act 2
-	; HPZ
-	zoneOffsetTableEntry.w  Objects_HPZ_1	; Act 1
-	zoneOffsetTableEntry.w  Objects_HPZ_2	; Act 2
-	; Zone 9
-	zoneOffsetTableEntry.w  Objects_Null	; Act 1
-	zoneOffsetTableEntry.w  Objects_Null	; Act 2
-	; OOZ
-	zoneOffsetTableEntry.w  Objects_OOZ_1	; Act 1
-	zoneOffsetTableEntry.w  Objects_OOZ_2	; Act 2
-	; MCZ
-	zoneOffsetTableEntry.w  Objects_MCZ_1	; Act 1
-	zoneOffsetTableEntry.w  Objects_MCZ_2	; Act 2
-	; CNZ
-	zoneOffsetTableEntry.w  Objects_CNZ_1	; Act 1
-	zoneOffsetTableEntry.w  Objects_CNZ_2	; Act 2
-	; CPZ
-	zoneOffsetTableEntry.w  Objects_CPZ_1	; Act 1
-	zoneOffsetTableEntry.w  Objects_CPZ_2	; Act 2
-	; DEZ
-	zoneOffsetTableEntry.w  Objects_DEZ_1	; Act 1
-	zoneOffsetTableEntry.w  Objects_DEZ_2	; Act 2
-	; ARZ
-	zoneOffsetTableEntry.w  Objects_ARZ_1	; Act 1
-	zoneOffsetTableEntry.w  Objects_ARZ_2	; Act 2
-	; SCZ
-	zoneOffsetTableEntry.w  Objects_SCZ_1	; Act 1
-	zoneOffsetTableEntry.w  Objects_SCZ_2	; Act 2
-    zoneTableEnd
+; Macro for marking the boundaries of an object layout file
+; So it doesn't read past the end/beginning of the file
+ObjectLayoutBoundary macro
+	dc.w	$FFFF, $0000, $0000
+    endm
 
-	; These things act as boundaries for the object layout parser, so it doesn't read past the end/beginning of the file
 	ObjectLayoutBoundary
 Objects_EHZ_1:	BINCLUDE	"level/objects/EHZ_1.bin"
 	ObjectLayoutBoundary
@@ -89962,6 +89904,10 @@ Objects_MCZ_2:	BINCLUDE	"level/objects/MCZ_2.bin"
 Objects_CNZ_1:	BINCLUDE	"level/objects/CNZ_1.bin"
 	ObjectLayoutBoundary
 Objects_CNZ_2:	BINCLUDE	"level/objects/CNZ_2.bin"
+	ObjectLayoutBoundary
+Objects_CNZ1_2P:	BINCLUDE	"level/objects/CNZ_1_2P.bin"
+	ObjectLayoutBoundary
+Objects_CNZ2_2P:	BINCLUDE	"level/objects/CNZ_2_2P.bin"
 	ObjectLayoutBoundary
 Objects_CPZ_1:	BINCLUDE	"level/objects/CPZ_1.bin"
 	ObjectLayoutBoundary
