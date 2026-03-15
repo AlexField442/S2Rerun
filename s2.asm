@@ -19911,6 +19911,7 @@ DrawInitialBG_LoadWholeBackground_512x256:
 
 	rts
     endif
+
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Subroutine to load zone/act data
@@ -19959,96 +19960,112 @@ ZoneDefs:	; Emerald Hill Zone
 		even
 	ZoneDefs_size:
 
+		; Zone 01 (unused)
 		dc.l ArtCmp_EHZ
 		dc.l BM16_EHZ
 		dc.l BM128_EHZ
 		dc.l Col_Invalid
 		dc.l Zone_Pal_Lev1
 
+		; Wood Zone (unused)
 		dc.l ArtCmp_EHZ
 		dc.l BM16_EHZ
 		dc.l BM128_EHZ
 		dc.l Col_WZ
 		dc.l Zone_Pal_WZ
 
+		; Zone 03 (unused)
 		dc.l ArtCmp_EHZ
 		dc.l BM16_EHZ
 		dc.l BM128_EHZ
 		dc.l Col_Invalid
 		dc.l Zone_Pal_Lev3
 
+		; Metropolis Zone 1/2
 		dc.l ArtCmp_MTZ
 		dc.l BM16_MTZ
 		dc.l BM128_MTZ
 		dc.l Col_MTZ
 		dc.l Zone_Pal_MTZ
 
+		; Metropolis Zone 3
 		dc.l ArtCmp_MTZ
 		dc.l BM16_MTZ
 		dc.l BM128_MTZ
 		dc.l Col_MTZ
 		dc.l Zone_Pal_MTZ
 
+		; Wing Fortress Zone
 		dc.l ArtCmp_WFZ
 		dc.l BM16_WFZ
 		dc.l BM128_WFZ
 		dc.l Col_WFZSCZ
 		dc.l Zone_Pal_WFZ
 
+		; Hill Top Zone
 		dc.l ArtCmp_HTZ
 		dc.l BM16_EHZ
 		dc.l BM128_EHZ
 		dc.l Col_EHZHTZ
 		dc.l Zone_Pal_HTZ
 
+		; Hidden Palace Zone
 		dc.l ArtCmp_HPZ
 		dc.l BM16_HPZ
 		dc.l BM128_HPZ
 		dc.l Col_HPZ
 		dc.l Zone_Pal_HPZ
 
+		; Zone 09
 		dc.l ArtCmp_EHZ
 		dc.l BM16_EHZ
 		dc.l BM128_EHZ
 		dc.l Col_Invalid
 		dc.l Zone_Pal_Lev9
 
+		; Oil Ocean Zone
 		dc.l ArtCmp_OOZ
 		dc.l BM16_OOZ
 		dc.l BM128_OOZ
 		dc.l Col_OOZ
 		dc.l Zone_Pal_OOZ
 
+		; Mystic Cave Zone
 		dc.l ArtCmp_MCZ
 		dc.l BM16_MCZ
 		dc.l BM128_MCZ
 		dc.l Col_MCZ
 		dc.l Zone_Pal_MCZ
 
+		; Casino Night Zone
 		dc.l ArtCmp_CNZ
 		dc.l BM16_CNZ
 		dc.l BM128_CNZ
 		dc.l Col_CNZ
 		dc.l Zone_Pal_CNZ
 
+		; Chemical Plant Zone
 		dc.l ArtCmp_CPZ
 		dc.l BM16_CPZ
 		dc.l BM128_CPZ
 		dc.l Col_CPZDEZ
 		dc.l Zone_Pal_CPZ
 
+		; Death Egg Zone
 		dc.l ArtCmp_CPZ
 		dc.l BM16_CPZ
 		dc.l BM128_CPZ
 		dc.l Col_CPZDEZ
 		dc.l Zone_Pal_DEZ
 
+		; Aquatic Ruin Zone
 		dc.l ArtCmp_ARZ
 		dc.l BM16_ARZ
 		dc.l BM128_ARZ
 		dc.l Col_ARZ
 		dc.l Zone_Pal_ARZ
 
+		; Sky Chase Zone
 		dc.l ArtCmp_SCZ
 		dc.l BM16_WFZ
 		dc.l BM128_WFZ
